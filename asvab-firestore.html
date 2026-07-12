@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASVAB Study Resources | MEISHA VERNELL</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=Bebas+Neue&family=Montserrat:wght@200;300;400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-analytics-compat.js"></script>
+    
+    <!-- Global Styles -->
+    <link rel="stylesheet" href="main.css">
+    
+    <!-- Page Styles -->
+    <link rel="stylesheet" href="asvab-firestore.css">
+</head>
+<body>
+    <div class="noise"></div>
+
+    <!-- Navigation -->
+    <nav class="nav" id="nav">
+        <div class="nav-links" id="navLinks">
+            <a href="portfolio.html" class="nav-link" role="link" tabindex="0">Portfolio</a>
+            <a href="about.html" class="nav-link" role="link" tabindex="0">About</a>
+            <a href="gallery-firestore.html" class="nav-link" role="link" tabindex="0">The LookBook</a>
+            <a href="index.html" class="nav-link nav-star" role="link" tabindex="0">★</a>
+            <a href="asvab-firestore.html" class="nav-link active" role="link" tabindex="0">ASVAB Prep</a>
+            <a href="connect.html" class="nav-link" role="link" tabindex="0">Connect</a>
+        </div>
+
+        <div class="nav-toggle" id="navToggle">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    </nav>
+    <div class="nav-overlay" id="navOverlay"></div>
+
+    <!-- Hero Section -->
+    <section class="asvab-hero">
+        <div class="hero-content">
+            <h1 class="hero-title">ASVAB PREPARATION</h1>
+            <p class="hero-subtitle">Everything you need to crush the exam</p>
+            <p class="hero-description">
+                Free study resources, live sessions, and expert guidance to help you ace the ASVAB 
+                and reach your military goals.
+            </p>
+        </div>
+    </section>
+
+    <!-- Two Column CTA Section -->
+    <section class="asvab-main">
+        <div class="cta-container">
+            <!-- Left: Free Study Resources -->
+            <div class="cta-card resources-card">
+                <div class="cta-icon">📚</div>
+                <h2 class="cta-title">FREE STUDY RESOURCES</h2>
+                <p class="cta-description">Access exclusive study notes, practice problems, and test-taking strategies</p>
+                
+                <div class="resource-preview">
+                    <h4>Includes:</h4>
+                    <ul class="resource-list" id="resourceList">
+                        <li>Comprehensive study notes</li>
+                        <li>ASVAB testing solutions</li>
+                        <li>Practice problems & answers</li>
+                        <li>Study tips & strategies</li>
+                    </ul>
+                </div>
+
+                <button class="cta-btn resources-btn" id="resourcesBtn">
+                    GET FREE ACCESS
+                </button>
+                <p class="cta-note">Just your name & email</p>
+            </div>
+
+            <!-- Right: Live Study Sessions -->
+            <div class="cta-card sessions-card">
+                <div class="cta-icon">👥</div>
+                <h2 class="cta-title">LIVE STUDY SESSIONS</h2>
+                <p class="cta-description">Join weekly live group sessions and get personalized 1-on-1 coaching</p>
+                
+                <div class="resource-preview">
+                    <h4>What You Get:</h4>
+                    <ul class="resource-list">
+                        <li>Weekly live study group</li>
+                        <li>All 7 ASVAB subjects covered</li>
+                        <li>Study community & accountability</li>
+                        <li>Optional 1-on-1 coaching</li>
+                        <li>Exam-day readiness check</li>
+                    </ul>
+                </div>
+
+                <button class="cta-btn sessions-btn" id="sessionsBtn">
+                    REGISTER FOR SESSIONS
+                </button>
+                <p class="cta-note">Free • Donations encouraged</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Study Materials Section -->
+    <section class="study-materials-section">
+        <h2 class="section-title">STUDY MATERIALS BY SUBJECT</h2>
+        <div class="materials-filters" id="materialsFilters"></div>
+        <div class="materials-grid" id="materialsGrid">
+            <div class="loading">Loading study materials...</div>
+        </div>
+    </section>
+
+    <!-- Modal: Free Resources Signup -->
+    <div class="modal" id="resourcesModal">
+        <div class="modal-content">
+            <button class="modal-close" id="resourcesClose">✕</button>
+            <h2 class="modal-title">Unlock Your Study Resources</h2>
+            <form class="signup-form" id="resourcesForm">
+                <div class="form-group">
+                    <label for="resourcesName">Full Name</label>
+                    <input type="text" id="resourcesName" name="fullName" required placeholder="First and Last Name">
+                </div>
+                <div class="form-group">
+                    <label for="resourcesEmail">Email Address</label>
+                    <input type="email" id="resourcesEmail" name="email" required placeholder="your@email.com">
+                </div>
+                <button type="submit" class="submit-btn">GET FREE ACCESS</button>
+            </form>
+            <div class="success-state" id="resourcesSuccess">
+                <div class="success-icon">✓</div>
+                <h3>Check Your Email!</h3>
+                <p>We've sent you a link to access all the free study resources.</p>
+                <p>You'll also receive information about supporting this work.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Session Signup -->
+    <div class="modal" id="sessionsModal">
+        <div class="modal-content">
+            <button class="modal-close" id="sessionsClose">✕</button>
+            <h2 class="modal-title">Register for Live Sessions</h2>
+            <form class="signup-form" id="sessionsForm">
+                <div class="form-group">
+                    <label for="sessionName">Full Name</label>
+                    <input type="text" id="sessionName" name="fullName" required placeholder="First and Last Name">
+                </div>
+                <div class="form-group">
+                    <label for="sessionEmail">Email Address</label>
+                    <input type="email" id="sessionEmail" name="email" required placeholder="your@email.com">
+                </div>
+                <div class="form-group">
+                    <label for="sessionBranch">Military Branch of Interest</label>
+                    <select id="sessionBranch" name="branch">
+                        <option value="">Select a branch</option>
+                        <option value="air-force">Air Force</option>
+                        <option value="army">Army</option>
+                        <option value="navy">Navy</option>
+                        <option value="marines">Marines</option>
+                        <option value="coast-guard">Coast Guard</option>
+                        <option value="space-force">Space Force</option>
+                        <option value="undecided">Undecided</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="testDate">Target Test Date</label>
+                    <input type="date" id="testDate" name="testDate">
+                </div>
+                <button type="submit" class="submit-btn">REGISTER NOW</button>
+            </form>
+            <div class="success-state" id="sessionsSuccess">
+                <div class="success-icon">✓</div>
+                <h3>You're Registered!</h3>
+                <p>Check your email for the Zoom link and session details.</p>
+                <p>You'll also receive information about optional donations to support 1-on-1 coaching.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p class="footer-text">© 2025 MEISHA VERNELL. ALL RIGHTS RESERVED.</p>
+    </footer>
+
+    <!-- Firebase Config -->
+    <script src="firebase-config.js"></script>
+    
+    <!-- Page JavaScript -->
+    <script>
+        // ============================================
+        // LOAD STUDY MATERIALS FROM FIRESTORE
+        // ============================================
+        const categoryFilter = {};
+
+        async function loadStudyMaterials() {
+            const container = document.getElementById('materialsGrid');
+            const filtersContainer = document.getElementById('materialsFilters');
+
+            try {
+                const snapshot = await firebase.firestore()
+                    .collection('asvab')
+                    .orderBy('createdAt', 'desc')
+                    .get();
+
+                if (snapshot.empty) {
+                    container.innerHTML = `
+                        <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: var(--light-gray);">
+                            <p style="font-size: 1rem; margin-bottom: 10px;">Study materials coming soon!</p>
+                            <p style="font-size: 0.8rem;">Check back later for exclusive ASVAB study notes and practice materials.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const materials = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+
+                // Get unique categories
+                const categories = [...new Set(materials.map(m => m.category))];
+
+                // Build filter buttons
+                filtersContainer.innerHTML = `
+                    <button class="material-filter active" data-filter="all">All</button>
+                    ${categories.map(cat => `
+                        <button class="material-filter" data-filter="${cat}">
+                            ${formatCategoryName(cat)}
+                        </button>
+                    `).join('')}
+                `;
+
+                // Add filter click handlers
+                document.querySelectorAll('.material-filter').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        document.querySelectorAll('.material-filter').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        renderMaterials(materials, btn.dataset.filter);
+                    });
+                });
+
+                renderMaterials(materials, 'all');
+            } catch (error) {
+                console.error('Error loading materials:', error);
+                container.innerHTML = '<div style="grid-column: 1 / -1; color: #fca5a5;">Error loading materials</div>';
+            }
+        }
+
+        function renderMaterials(materials, filter) {
+            const container = document.getElementById('materialsGrid');
+            const filtered = filter === 'all' 
+                ? materials 
+                : materials.filter(m => m.category === filter);
+
+            if (filtered.length === 0) {
+                container.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: var(--light-gray); padding: 40px;">No materials in this category</div>';
+                return;
+            }
+
+            container.innerHTML = filtered.map(material => `
+                <div class="material-card">
+                    <div class="material-header">
+                        <h3 class="material-title">${material.title}</h3>
+                        <span class="material-category">${formatCategoryName(material.category)}</span>
+                    </div>
+                    <p class="material-content">${material.content.substring(0, 200)}...</p>
+                    ${material.fileUrl ? `
+                        <a href="${material.fileUrl}" target="_blank" class="material-link">
+                            📄 Download Document
+                        </a>
+                    ` : ''}
+                </div>
+            `).join('');
+        }
+
+        function formatCategoryName(cat) {
+            const names = {
+                'arithmetic': 'Arithmetic Reasoning',
+                'word-knowledge': 'Word Knowledge',
+                'comprehension': 'Paragraph Comprehension',
+                'math': 'Mathematics',
+                'science': 'Science',
+                'mechanical': 'Mechanical',
+                'electronics': 'Electronics'
+            };
+            return names[cat] || cat;
+        }
+
+        // ============================================
+        // MODAL MANAGEMENT
+        // ============================================
+        const resourcesModal = document.getElementById('resourcesModal');
+        const sessionsModal = document.getElementById('sessionsModal');
+        const resourcesBtn = document.getElementById('resourcesBtn');
+        const sessionsBtn = document.getElementById('sessionsBtn');
+        const resourcesClose = document.getElementById('resourcesClose');
+        const sessionsClose = document.getElementById('sessionsClose');
+
+        resourcesBtn.addEventListener('click', () => {
+            resourcesModal.classList.add('show');
+            document.body.style.overflow = 'hidden';
+        });
+
+        sessionsBtn.addEventListener('click', () => {
+            sessionsModal.classList.add('show');
+            document.body.style.overflow = 'hidden';
+        });
+
+        resourcesClose.addEventListener('click', () => closeModal(resourcesModal));
+        sessionsClose.addEventListener('click', () => closeModal(sessionsModal));
+
+        function closeModal(modal) {
+            modal.classList.remove('show');
+            document.body.style.overflow = '';
+        }
+
+        resourcesModal.addEventListener('click', (e) => {
+            if (e.target === resourcesModal) closeModal(resourcesModal);
+        });
+        sessionsModal.addEventListener('click', (e) => {
+            if (e.target === sessionsModal) closeModal(sessionsModal);
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeModal(resourcesModal);
+                closeModal(sessionsModal);
+            }
+        });
+
+        // ============================================
+        // FORM SUBMISSIONS - Save to Firestore
+        // ============================================
+        document.getElementById('resourcesForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const name = document.getElementById('resourcesName').value.trim();
+            const email = document.getElementById('resourcesEmail').value.trim().toLowerCase();
+            
+            // Validate
+            if (!name || name.length < 2) {
+                alert('Please enter a valid name');
+                return;
+            }
+            if (!email || !email.includes('@')) {
+                alert('Please enter a valid email');
+                return;
+            }
+            
+            try {
+                const timestamp = firebase.firestore.FieldValue.serverTimestamp();
+
+                // Upsert by email (doc ID = email) - no read required, so the
+                // "contacts" collection can stay write-only / non-readable
+                // by the public in Firestore security rules.
+                await firebase.firestore()
+                    .collection('contacts')
+                    .doc(email)
+                    .set({
+                        email: email,
+                        fullName: name,
+                        phone: '',
+                        signupDate: timestamp,
+                        lastContact: timestamp,
+                        signupSource: 'Free Resources',
+                        consentedToEmails: true,
+                        unsubscribedAt: null,
+                        lastEmailType: 'Resources',
+                    }, { merge: true });
+
+                // Show success
+                document.getElementById('resourcesForm').style.display = 'none';
+                document.getElementById('resourcesSuccess').style.display = 'block';
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error submitting form. Please try again.');
+            }
+        });
+
+        document.getElementById('sessionsForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const name = document.getElementById('sessionName').value.trim();
+            const email = document.getElementById('sessionEmail').value.trim().toLowerCase();
+            const branch = document.getElementById('sessionBranch').value;
+            const testDate = document.getElementById('testDate').value;
+            
+            // Validate
+            if (!name || name.length < 2) {
+                alert('Please enter a valid name');
+                return;
+            }
+            if (!email || !email.includes('@')) {
+                alert('Please enter a valid email');
+                return;
+            }
+            
+            try {
+                const timestamp = firebase.firestore.FieldValue.serverTimestamp();
+
+                // Upsert by email (doc ID = email) - no read required, so the
+                // "contacts" collection can stay write-only / non-readable
+                // by the public in Firestore security rules.
+                await firebase.firestore()
+                    .collection('contacts')
+                    .doc(email)
+                    .set({
+                        email: email,
+                        fullName: name,
+                        phone: '',
+                        militaryBranch: branch || '',
+                        targetTestDate: testDate || '',
+                        signupDate: timestamp,
+                        lastContact: timestamp,
+                        signupSource: 'Live Sessions',
+                        consentedToEmails: true,
+                        unsubscribedAt: null,
+                        lastEmailType: 'Sessions',
+                    }, { merge: true });
+
+                // Show success
+                document.getElementById('sessionsForm').style.display = 'none';
+                document.getElementById('sessionsSuccess').style.display = 'block';
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error submitting form. Please try again.');
+            }
+        });
+
+        // ============================================
+        // INITIALIZATION
+        // ============================================
+        document.addEventListener('DOMContentLoaded', loadStudyMaterials);
+
+        
+    </script>
+    
+    <!-- Navigation JS -->
+    <script src="main.js" defer></script>
+</body>
+</html>

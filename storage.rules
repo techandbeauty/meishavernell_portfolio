@@ -1,0 +1,29 @@
+rules_version = '2';
+
+// Firebase Storage Security Rules for meishavernell-site
+// Paste this into: Firebase Console -> Storage -> Rules
+//
+// gallery/** and asvab/** hold the photos and files uploaded from
+// admin-dashboard.html. The public site needs to READ them (to display
+// on gallery-firestore.html / asvab-firestore.html), but only a signed-in
+// admin should be able to WRITE or DELETE them.
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    match /gallery/{fileName} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    match /asvab/{fileName} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    // Deny everything else by default.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

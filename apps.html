@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apps | MEISHA VERNELL</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=Bebas+Neue&family=Montserrat:wght@200;300;400;500;600&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="main.css">
+    <link rel="stylesheet" href="apps.css">
+
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --black:      #0a0a0a;
+            --near-black: #111111;
+            --card-bg:    #141414;
+            --border:     rgba(255,255,255,0.08);
+            --border-h:   rgba(255,255,255,0.18);
+            --white:      #f5f5f0;
+            --light-gray: #b0b0a8;
+            --mid-gray:   #666660;
+            --accent:     #c9a96e;
+            --accent-dim: rgba(201,169,110,0.15);
+        }
+
+        body {
+            background: var(--black);
+            color: var(--white);
+            font-family: 'Montserrat', sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .noise {
+            position: fixed; inset: 0; z-index: 0; pointer-events: none;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+            opacity: 0.4;
+        }
+
+        /* ── HEADER ── */
+        .page-header {
+            position: relative; z-index: 1;
+            padding: 160px 40px 80px; text-align: center;
+        }
+        .page-header h1 {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: clamp(3.5rem, 10vw, 7rem);
+            letter-spacing: 0.06em; line-height: 0.9; color: var(--white);
+        }
+        .page-header .subtitle {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: clamp(1rem, 2vw, 1.3rem);
+            font-style: italic; color: var(--light-gray); margin-top: 20px; font-weight: 300;
+        }
+
+        /* ── TABS ── */
+        .tab-bar {
+            position: relative; z-index: 1;
+            display: flex; justify-content: center;
+            border: 1px solid var(--border);
+            max-width: 360px; margin: 0 auto 60px;
+        }
+        .tab-btn {
+            flex: 1; padding: 14px 28px;
+            background: transparent; border: none; cursor: pointer;
+            font-family: 'Montserrat', sans-serif; font-size: 0.6rem; font-weight: 600;
+            letter-spacing: 0.2em; text-transform: uppercase;
+            color: var(--mid-gray); transition: all 0.3s ease; position: relative;
+        }
+        .tab-btn + .tab-btn { border-left: 1px solid var(--border); }
+        .tab-btn.active { color: var(--white); background: rgba(255,255,255,0.04); }
+        .tab-btn.active::after {
+            content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 1px;
+            background: var(--accent);
+        }
+        .tab-btn:hover:not(.active) { color: var(--light-gray); }
+
+        /* ── SECTIONS ── */
+        .apps-section {
+            position: relative; z-index: 1;
+            display: none; padding: 0 40px 120px;
+            max-width: 1100px; margin: 0 auto;
+        }
+        .apps-section.active { display: block; }
+
+        /* ── APP SHOWCASE CARD ── */
+        .app-showcase {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 1px; background: var(--border);
+            border: 1px solid var(--border); margin-bottom: 40px;
+            transition: border-color 0.4s;
+            opacity: 0; transform: translateY(20px);
+            animation: fadeUp 0.6s ease forwards;
+        }
+        .app-showcase:hover { border-color: var(--border-h); }
+
+        /* ── VISUAL PANEL ── */
+        .app-visual {
+            position: relative; overflow: hidden;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            padding: 60px 40px; min-height: 420px;
+            background: var(--card-bg);
+        }
+        .app-visual-bg {
+            position: absolute; inset: -30px;
+            background-size: cover; background-position: center;
+            filter: blur(32px) saturate(0.5) brightness(0.6);
+            opacity: 0.25; transform: scale(1.1);
+            transition: opacity 0.5s ease;
+        }
+        .app-showcase:hover .app-visual-bg { opacity: 0.38; }
+        .app-visual::after {
+            content: ''; position: absolute; inset: 0;
+            background: radial-gradient(ellipse at center, rgba(10,10,10,0.2) 0%, rgba(10,10,10,0.75) 100%);
+            pointer-events: none; z-index: 0;
+        }
+        .app-icon-wrap, .app-platform-badge, .github-stats { position: relative; z-index: 1; }
+        .app-icon-wrap { margin-bottom: 24px; }
+        .app-icon {
+            width: 100px; height: 100px; border-radius: 22px;
+            border: 1px solid rgba(255,255,255,0.12);
+            box-shadow: 0 24px 60px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.05);
+            background: var(--near-black);
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'Bebas Neue', sans-serif; font-size: 2.4rem; color: var(--accent);
+            overflow: hidden;
+        }
+        .app-icon img { width: 100%; height: 100%; object-fit: cover; }
+
+        .app-platform-badge {
+            display: inline-flex; align-items: center; gap: 7px;
+            font-size: 0.55rem; font-weight: 600; letter-spacing: 0.2em;
+            text-transform: uppercase; color: var(--accent);
+            border: 1px solid rgba(201,169,110,0.3); padding: 5px 13px;
+        }
+        .badge-dot {
+            width: 5px; height: 5px; border-radius: 50%;
+            background: var(--accent); animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50%       { opacity: 0.4; transform: scale(0.8); }
+        }
+
+        .github-stats { display: flex; gap: 28px; margin-top: 24px; }
+        .gh-stat { text-align: center; }
+        .gh-stat-value {
+            display: block; font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.4rem; letter-spacing: 0.05em; color: var(--white);
+        }
+        .gh-stat-label { font-size: 0.5rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--mid-gray); }
+
+        /* ── INFO PANEL ── */
+        .app-info {
+            background: var(--card-bg); padding: 60px 50px;
+            display: flex; flex-direction: column; justify-content: center;
+        }
+        .app-type {
+            font-size: 0.55rem; font-weight: 600; letter-spacing: 0.25em;
+            text-transform: uppercase; color: var(--mid-gray); margin-bottom: 12px;
+        }
+        .app-name {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: clamp(2.2rem, 4vw, 3rem);
+            letter-spacing: 0.05em; line-height: 1; color: var(--white); margin-bottom: 8px;
+        }
+        .app-tagline {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.1rem; font-style: italic; color: var(--accent); margin-bottom: 24px;
+        }
+        .app-desc {
+            font-size: 0.78rem; line-height: 1.85;
+            color: var(--light-gray); margin-bottom: 32px; font-weight: 300;
+        }
+        .tech-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 36px; }
+        .tech-tag {
+            font-size: 0.5rem; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase;
+            border: 1px solid var(--border); padding: 5px 10px; color: var(--light-gray); transition: all 0.3s;
+        }
+        .tech-tag:hover { border-color: var(--border-h); color: var(--white); }
+
+        /* ── BUTTONS ── */
+        .app-ctas { display: flex; flex-direction: column; gap: 10px; }
+        .cta-btn {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 14px 20px; font-family: 'Montserrat', sans-serif;
+            font-size: 0.58rem; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase;
+            text-decoration: none; cursor: pointer; border: none; transition: all 0.3s ease;
+        }
+        .cta-btn .btn-arrow { font-size: 0.75rem; }
+        .cta-primary { background: var(--accent); color: var(--black); }
+        .cta-primary:hover { background: #d4b47a; }
+        .cta-secondary {
+            background: transparent; border: 1px solid var(--border); color: var(--light-gray);
+        }
+        .cta-secondary:hover { border-color: var(--border-h); color: var(--white); background: rgba(255,255,255,0.03); }
+        .cta-in-review {
+            background: transparent; border: 1px solid rgba(201,169,110,0.3);
+            color: var(--accent); cursor: default; pointer-events: none; opacity: 0.8;
+        }
+        .cta-coming-soon {
+            background: transparent; border: 1px solid var(--border);
+            color: var(--mid-gray); cursor: default; pointer-events: none;
+        }
+
+        .landing-note {
+            font-size: 0.55rem; letter-spacing: 0.1em;
+            color: var(--mid-gray); margin-top: 14px; font-style: italic;
+        }
+        .landing-note a {
+            color: var(--accent); text-decoration: none;
+            border-bottom: 1px solid rgba(201,169,110,0.3); transition: border-color 0.3s;
+        }
+        .landing-note a:hover { border-color: var(--accent); }
+
+        /* ── EMPTY STATE ── */
+        .empty-state {
+            text-align: center; padding: 100px 40px; border: 1px solid var(--border);
+        }
+        .empty-state p {
+            font-family: 'Cormorant Garamond', serif; font-size: 1.4rem;
+            font-style: italic; color: var(--light-gray); margin-bottom: 8px;
+        }
+        .empty-state span { font-size: 0.65rem; letter-spacing: 0.15em; color: var(--mid-gray); }
+
+        /* ── FOOTER ── */
+        .footer {
+            position: relative; z-index: 1; text-align: center;
+            padding: 40px; border-top: 1px solid var(--border);
+        }
+        .footer-text { font-size: 0.55rem; letter-spacing: 0.2em; color: var(--mid-gray); text-transform: uppercase; }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 900px) {
+            .app-showcase { grid-template-columns: 1fr; }
+            .app-visual { min-height: 280px; padding: 50px 30px; }
+            .app-info { padding: 40px 30px; }
+        }
+        @media (max-width: 600px) {
+            .page-header { padding: 120px 24px 60px; }
+            .apps-section { padding: 0 24px 80px; }
+            .tab-bar { margin: 0 24px 48px; max-width: none; }
+        }
+
+        @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+    <div class="noise"></div>
+
+    <!-- ── NAVIGATION ── -->
+    <nav class="nav" id="nav">
+        <div class="nav-links" id="navLinks">
+            <a href="portfolio.html" class="nav-link" role="link" tabindex="0">Portfolio</a>
+            <a href="about.html" class="nav-link" role="link" tabindex="0">About</a>
+            <a href="gallery-firestore.html" class="nav-link" role="link" tabindex="0">The LookBook</a>
+            <a href="index.html" class="nav-link nav-star" role="link" tabindex="0">★</a>
+            <a href="asvab-firestore.html" class="nav-link" role="link" tabindex="0">ASVAB Prep</a>
+            <a href="connect.html" class="nav-link" role="link" tabindex="0">Connect</a>
+        </div>
+
+        <div class="nav-toggle" id="navToggle">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    </nav>
+    <div class="nav-overlay" id="navOverlay"></div>
+
+    <!-- ── PAGE HEADER ── -->
+    <header class="page-header">
+        <h1>Apps &amp;<br>Products</h1>
+        <p class="subtitle">From idea to shipped — real software, real purpose.</p>
+    </header>
+
+    <!-- ── TAB BAR (iOS / Android / Web) ── -->
+    <div class="tab-bar">
+        <button class="tab-btn active" onclick="switchTab('ios', this)">iOS</button>
+        <button class="tab-btn" onclick="switchTab('android', this)">Android</button>
+        <button class="tab-btn" onclick="switchTab('web', this)">Web</button>
+    </div>
+
+
+    <!-- ════════════════════════════════════════════════════
+         iOS SECTION
+         ════════════════════════════════════════════════════ -->
+    <section class="apps-section active" id="ios-section">
+
+        <!-- PRAXIS -->
+        <div class="app-showcase">
+            <div class="app-visual">
+                <div class="app-visual-bg"
+                     style="background-image: url('images/praxis-icon.png')">
+                </div>
+                <div class="app-icon-wrap">
+                    <div class="app-icon">P</div>
+                </div>
+                <div class="app-platform-badge">
+                    <span class="badge-dot"></span>
+                    iOS · TestFlight Beta
+                </div>
+                <div class="github-stats">
+                    <div class="gh-stat">
+                        <span class="gh-stat-value" id="praxisStars">—</span>
+                        <span class="gh-stat-label">Stars</span>
+                    </div>
+                    <div class="gh-stat">
+                        <span class="gh-stat-value" id="praxisForks">—</span>
+                        <span class="gh-stat-label">Forks</span>
+                    </div>
+                    <div class="gh-stat">
+                        <span class="gh-stat-value" id="praxisLang">—</span>
+                        <span class="gh-stat-label">Language</span>
+                    </div>
+                </div>
+            </div>
+            <div class="app-info">
+                <p class="app-type">iOS Application · Social Learning</p>
+                <h2 class="app-name">Praxis</h2>
+                <p class="app-tagline">Study smarter. Together.</p>
+                <p class="app-desc">
+                    Praxis is a social study platform where learning feels like scrolling your feed.
+                    Follow topics you care about, discover flashcards from your community, and track
+                    your progress in real time. Built with Swift, SwiftUI, and Firebase — designed
+                    to make studying something you actually want to do.
+                </p>
+                <div class="tech-tags">
+                    <span class="tech-tag">Swift</span>
+                    <span class="tech-tag">SwiftUI</span>
+                    <span class="tech-tag">Firebase</span>
+                    <span class="tech-tag">Firestore</span>
+                    <span class="tech-tag">AI-Powered</span>
+                </div>
+                <div class="app-ctas">
+                    <a href="#" class="cta-btn cta-primary">
+                        Become a Beta Tester
+                        <span class="btn-arrow">→</span>
+                    </a>
+                    <a href="https://github.com/techandbeauty/Praxis-Study-App"
+                       target="_blank" class="cta-btn cta-secondary">
+                        View on GitHub
+                        <span class="btn-arrow">↗</span>
+                    </a>
+                    <span class="cta-btn cta-in-review">
+                        App Store — In Review
+                        <span class="btn-arrow">⏳</span>
+                    </span>
+                </div>
+                <p class="landing-note">View the <a href="#" target="_blank">Praxis landing page →</a></p>
+            </div>
+        </div>
+
+        <!-- MARC -->
+        <div class="app-showcase" style="animation-delay: 0.14s;">
+            <div class="app-visual">
+                <div class="app-visual-bg"
+                     style="background-image: url('images/marc-icon.png')">
+                </div>
+                <div class="app-icon-wrap">
+                    <div class="app-icon">M</div>
+                </div>
+                <div class="app-platform-badge">
+                    <span class="badge-dot"></span>
+                    iOS · In Development
+                </div>
+                <div class="github-stats">
+                    <div class="gh-stat">
+                        <span class="gh-stat-value" id="marcStars">—</span>
+                        <span class="gh-stat-label">Stars</span>
+                    </div>
+                    <div class="gh-stat">
+                        <span class="gh-stat-value" id="marcForks">—</span>
+                        <span class="gh-stat-label">Forks</span>
+                    </div>
+                    <div class="gh-stat">
+                        <span class="gh-stat-value" id="marcLang">—</span>
+                        <span class="gh-stat-label">Language</span>
+                    </div>
+                </div>
+            </div>
+            <div class="app-info">
+                <p class="app-type">iOS Application · AI Marketing</p>
+                <h2 class="app-name">MARC</h2>
+                <p class="app-tagline">Marketing, AI, Relations &amp; Communications.</p>
+                <p class="app-desc">
+                    MARC is an AI-powered marketing assistant built for small businesses that want
+                    big results. Voice commands, automated social scheduling, audience insights, and
+                    cross-platform campaign management — all in one intelligent dashboard.
+                    Currently in development for iOS, with Android coming soon.
+                </p>
+                <div class="tech-tags">
+                    <span class="tech-tag">Swift</span>
+                    <span class="tech-tag">SwiftUI</span>
+                    <span class="tech-tag">Firebase</span>
+                    <span class="tech-tag">OpenAI</span>
+                    <span class="tech-tag">Stripe</span>
+                </div>
+                <div class="app-ctas">
+                    <span class="cta-btn cta-coming-soon">
+                        Beta Coming Soon
+                        <span class="btn-arrow">🔒</span>
+                    </span>
+                    <a href="https://github.com/techandbeauty/MARC-AI"
+                       target="_blank" class="cta-btn cta-secondary">
+                        View on GitHub
+                        <span class="btn-arrow">↗</span>
+                    </a>
+                </div>
+                <p class="landing-note">View the <a href="#" target="_blank">MARC landing page →</a></p>
+            </div>
+        </div>
+
+        <!--
+        ══════════════════════════════════════════════════════════════
+        ADDING A NEW iOS APP — copy this block, fill it in, and add
+        its GitHub repo to the repos[] array in the script below.
+
+        <div class="app-showcase" style="animation-delay: 0.28s;">
+            <div class="app-visual">
+                <div class="app-visual-bg" style="background-image: url('images/your-icon.png')"></div>
+                <div class="app-icon-wrap">
+                    <div class="app-icon"><img src="images/your-icon.png" alt="App Name"></div>
+                </div>
+                <div class="app-platform-badge">
+                    <span class="badge-dot"></span>
+                    iOS · TestFlight Beta
+                </div>
+                <div class="github-stats">
+                    <div class="gh-stat"><span class="gh-stat-value" id="newStars">—</span><span class="gh-stat-label">Stars</span></div>
+                    <div class="gh-stat"><span class="gh-stat-value" id="newForks">—</span><span class="gh-stat-label">Forks</span></div>
+                    <div class="gh-stat"><span class="gh-stat-value" id="newLang">—</span><span class="gh-stat-label">Language</span></div>
+                </div>
+            </div>
+            <div class="app-info">
+                <p class="app-type">iOS Application · [Category]</p>
+                <h2 class="app-name">App Name</h2>
+                <p class="app-tagline">Your tagline here.</p>
+                <p class="app-desc">Description of your app...</p>
+                <div class="tech-tags">
+                    <span class="tech-tag">Swift</span>
+                </div>
+                <div class="app-ctas">
+                    <a href="TESTFLIGHT-URL" class="cta-btn cta-primary">Become a Beta Tester <span class="btn-arrow">→</span></a>
+                    <span class="cta-btn cta-in-review">App Store — In Review <span class="btn-arrow">⏳</span></span>
+                </div>
+                <p class="landing-note">View the <a href="LANDING-PAGE-URL" target="_blank">landing page →</a></p>
+            </div>
+        </div>
+        ══════════════════════════════════════════════════════════════
+        -->
+
+    </section>
+
+
+    <!-- ════════════════════════════════════════════════════
+         ANDROID SECTION
+         ════════════════════════════════════════════════════ -->
+    <section class="apps-section" id="android-section">
+        <div class="empty-state">
+            <p>Android apps in development.</p>
+            <span>MARC &amp; Praxis Android releases coming soon via cross-platform build.</span>
+        </div>
+    </section>
+
+
+    <!-- ════════════════════════════════════════════════════
+         WEB SECTION
+         ════════════════════════════════════════════════════ -->
+    <section class="apps-section" id="web-section">
+
+        <!-- ASVAB STUDY SESSIONS -->
+        <div class="app-showcase" style="animation-delay: 0.1s;">
+            <div class="app-visual">
+                <!--
+                    OPTIONAL: Replace the gradient bg with a real image.
+                    Upload to Cloudinary with tag: mv-app-asvab
+                    Then let the Cloudinary loader below handle it automatically.
+                    Or set it manually:
+                    style="background-image: url('images/asvab-bg.png')"
+                -->
+                <div class="app-visual-bg"
+                     style="background: linear-gradient(135deg, #0a0a14 0%, #1a1a2e 50%, #0d0d1a 100%);">
+                </div>
+
+                <div class="app-icon-wrap">
+                    <div class="app-icon"
+                         style="font-size: 2.2rem; border: 1px solid rgba(201,169,98,0.35);">
+                        🪖
+                    </div>
+                </div>
+
+                <div class="app-platform-badge">
+                    <span class="badge-dot"></span>
+                    Web · Live Every Wednesday
+                </div>
+
+                <div class="github-stats">
+                    <div class="gh-stat">
+                        <span class="gh-stat-value">$25</span>
+                        <span class="gh-stat-label">Per Session</span>
+                    </div>
+                    <div class="gh-stat">
+                        <span class="gh-stat-value">90</span>
+                        <span class="gh-stat-label">Minutes</span>
+                    </div>
+                    <div class="gh-stat">
+                        <span class="gh-stat-value">9</span>
+                        <span class="gh-stat-label">Topics</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="app-info">
+                <p class="app-type">Live Study Program · Military Prep</p>
+                <h2 class="app-name">ASVAB Study Sessions</h2>
+                <p class="app-tagline">Focus. Structure. Results.</p>
+                <p class="app-desc">
+                    Live virtual study sessions built for future Airmen and Airwomen.
+                    Every Wednesday 6:30–8 PM we take on 1–2 core ASVAB concepts —
+                    breaking them down, practicing hands-on, then applying to real test
+                    material. Each session builds on the last. Pay as you go, no long-term
+                    commitment required.
+                </p>
+                <div class="tech-tags">
+                    <span class="tech-tag">Google Meet</span>
+                    <span class="tech-tag">Air Force Prep</span>
+                    <span class="tech-tag">Firebase</span>
+                    <span class="tech-tag">Pay As You Go</span>
+                    <span class="tech-tag">Praxis Method</span>
+                </div>
+                <div class="app-ctas">
+                    <a href="asvab-firestore.html" class="cta-btn cta-primary">
+                        Register for a Session
+                        <span class="btn-arrow">→</span>
+                    </a>
+                    <a href="asvab-firestore.html#curriculum" class="cta-btn cta-secondary">
+                        View Full Curriculum
+                        <span class="btn-arrow">↓</span>
+                    </a>
+                </div>
+                <p class="landing-note">
+                    Powered by the <a href="asvab-firestore.html" target="_blank">Praxis study method →</a>
+                </p>
+            </div>
+        </div>
+
+        <!--
+        ══════════════════════════════════════════════════════════════
+        ADDING A NEW WEB PROJECT — copy this block and fill it in.
+        No GitHub stats needed unless you want to show custom numbers.
+
+        <div class="app-showcase" style="animation-delay: 0.24s;">
+            <div class="app-visual">
+                <div class="app-visual-bg" style="background-image: url('images/your-bg.png')"></div>
+                <div class="app-icon-wrap">
+                    <div class="app-icon">🔤</div>
+                </div>
+                <div class="app-platform-badge">
+                    <span class="badge-dot"></span>
+                    Web · Live
+                </div>
+                <div class="github-stats">
+                    <div class="gh-stat"><span class="gh-stat-value">Free</span><span class="gh-stat-label">To Use</span></div>
+                    <div class="gh-stat"><span class="gh-stat-value">—</span><span class="gh-stat-label">Stat</span></div>
+                    <div class="gh-stat"><span class="gh-stat-value">—</span><span class="gh-stat-label">Stat</span></div>
+                </div>
+            </div>
+            <div class="app-info">
+                <p class="app-type">Web Application · [Category]</p>
+                <h2 class="app-name">Project Name</h2>
+                <p class="app-tagline">Your tagline.</p>
+                <p class="app-desc">Description...</p>
+                <div class="tech-tags">
+                    <span class="tech-tag">React</span>
+                </div>
+                <div class="app-ctas">
+                    <a href="your-page.html" class="cta-btn cta-primary">Visit Site <span class="btn-arrow">→</span></a>
+                </div>
+            </div>
+        </div>
+        ══════════════════════════════════════════════════════════════
+        -->
+
+    </section>
+
+
+    <!-- ── FOOTER ── -->
+    <footer class="footer">
+        <p class="footer-text">© 2026 Meisha Vernell. All rights reserved.</p>
+    </footer>
+
+
+    <script>
+        const CLOUDINARY_CLOUD_NAME = 'didqb05ko';
+
+        /* ─── CLOUDINARY IMAGE LOADER ─────────────────────────────
+           Tags set in Cloudinary → Media Library:
+             Praxis icon  → mv-app-praxis
+             MARC icon    → mv-app-marc
+             ASVAB bg     → mv-app-asvab  (optional — uses gradient fallback)
+
+           nth-child numbers: 1=Praxis, 2=MARC (iOS section)
+           Web section uses a separate query selector below.
+        ─────────────────────────────────────────────────────────── */
+        const appImages = [
+            {
+                tag:    'mv-app-praxis',
+                bgEl:   document.querySelector('#ios-section .app-showcase:nth-child(1) .app-visual-bg'),
+                iconEl: document.querySelector('#ios-section .app-showcase:nth-child(1) .app-icon')
+            },
+            {
+                tag:    'mv-app-marc',
+                bgEl:   document.querySelector('#ios-section .app-showcase:nth-child(2) .app-visual-bg'),
+                iconEl: document.querySelector('#ios-section .app-showcase:nth-child(2) .app-icon')
+            },
+            {
+                tag:    'mv-app-asvab',
+                bgEl:   document.querySelector('#web-section .app-showcase:nth-child(1) .app-visual-bg'),
+                iconEl: null   // keep the emoji icon — set to null to skip icon replacement
+            }
+        ];
+
+        async function loadAppImages() {
+            for (const app of appImages) {
+                try {
+                    const res = await fetch(
+                        `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/list/${app.tag}.json?_=${Date.now()}`
+                    );
+                    if (!res.ok) continue;
+                    const data = await res.json();
+                    if (!data.resources || data.resources.length === 0) continue;
+
+                    const img = data.resources[0];
+                    const url = `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload/q_auto,f_auto/${img.public_id}.${img.format}`;
+
+                    if (app.bgEl)   app.bgEl.style.backgroundImage = `url('${url}')`;
+                    if (app.iconEl) app.iconEl.innerHTML = `<img src="${url}" alt="App icon">`;
+
+                } catch (e) {
+                    console.log(`Cloudinary image not found for tag: ${app.tag}`);
+                }
+            }
+        }
+
+        /* ─── TAB SWITCHING ───────────────────────────────────── */
+        function switchTab(platform, btn) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            document.querySelectorAll('.apps-section').forEach(s => s.classList.remove('active'));
+            document.getElementById(platform + '-section').classList.add('active');
+
+            // Re-trigger card entrance animations
+            const cards = document.querySelectorAll('#' + platform + '-section .app-showcase');
+            cards.forEach((card, i) => {
+                card.style.animation = 'none';
+                card.offsetHeight; // force reflow
+                card.style.animation = `fadeUp 0.6s ease ${i * 0.14}s forwards`;
+            });
+        }
+
+        /* ─── GITHUB API ──────────────────────────────────────
+           Add new iOS/Android repos here when you ship new apps.
+           Web projects don't need GitHub stats — skip adding them.
+        ─────────────────────────────────────────────────────── */
+        const GITHUB_USER = 'techandbeauty';
+        const repos = [
+            { repo: 'Praxis-Study-App', stars: 'praxisStars', forks: 'praxisForks', lang: 'praxisLang' },
+            { repo: 'MARC-AI',          stars: 'marcStars',   forks: 'marcForks',   lang: 'marcLang'   }
+        ];
+
+        async function fetchGitHubStats() {
+            for (const r of repos) {
+                try {
+                    const res = await fetch(
+                        `https://api.github.com/repos/${GITHUB_USER}/${r.repo}`,
+                        { headers: { 'Accept': 'application/vnd.github.v3+json' } }
+                    );
+                    if (!res.ok) continue;
+                    const data = await res.json();
+                    const s = document.getElementById(r.stars);
+                    const f = document.getElementById(r.forks);
+                    const l = document.getElementById(r.lang);
+                    if (s) s.textContent = data.stargazers_count ?? '0';
+                    if (f) f.textContent = data.forks_count ?? '0';
+                    if (l) l.textContent = data.language ?? 'N/A';
+                } catch (e) {
+                    console.log(`GitHub stats unavailable for ${r.repo}`);
+                }
+            }
+        }
+
+        /* ─── INIT ─────────────────────────────────────────── */
+        document.addEventListener('DOMContentLoaded', () => {
+            loadAppImages();
+            fetchGitHubStats();
+        });
+    </script>
+
+    <script src="main.js" defer></script>
+</body>
+</html>

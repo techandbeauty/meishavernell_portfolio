@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The LookBook | MEISHA VERNELL</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=Bebas+Neue&family=Montserrat:wght@200;300;400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-analytics-compat.js"></script>
+    
+    <!-- Global Styles -->
+    <link rel="stylesheet" href="main.css">
+    
+    <!-- Page Styles -->
+    <link rel="stylesheet" href="gallery-firestore.css">
+</head>
+<body>
+    <div class="noise"></div>
+
+    <!-- Navigation -->
+    <nav class="nav" id="nav">
+        <div class="nav-links" id="navLinks">
+            <a href="portfolio.html" class="nav-link" role="link" tabindex="0">Portfolio</a>
+            <a href="about.html" class="nav-link" role="link" tabindex="0">About</a>
+            <a href="gallery-firestore.html" class="nav-link active" role="link" tabindex="0">The LookBook</a>
+            <a href="index.html" class="nav-link nav-star" role="link" tabindex="0">★</a>
+            <a href="asvab-firestore.html" class="nav-link" role="link" tabindex="0">ASVAB Prep</a>
+            <a href="connect.html" class="nav-link" role="link" tabindex="0">Connect</a>
+        </div>
+
+        <div class="nav-toggle" id="navToggle">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    </nav>
+    <div class="nav-overlay" id="navOverlay"></div>
+
+    <!-- Header -->
+    <header class="gallery-header">
+        <h1 class="gallery-title">THE LOOKBOOK</h1>
+        <p class="gallery-subtitle">My Journey Into The Air Force</p>
+    </header>
+
+    <!-- Filter Tabs -->
+    <div class="filter-section">
+        <div class="filter-tabs">
+            <button class="filter-tab active" data-filter="all">All</button>
+            <button class="filter-tab" data-filter="training">Training</button>
+            <button class="filter-tab" data-filter="moments">Moments</button>
+            <button class="filter-tab" data-filter="milestones">Milestones</button>
+            <button class="filter-tab" data-filter="lifestyle">Lifestyle</button>
+        </div>
+    </div>
+
+    <!-- Gallery Grid -->
+    <section class="gallery-section">
+        <div class="gallery-grid" id="galleryGrid">
+            <div class="loading">Loading gallery...</div>
+        </div>
+    </section>
+
+    <!-- Image Modal -->
+    <div class="image-modal" id="imageModal">
+        <button class="modal-close" id="modalClose">✕</button>
+        <div class="modal-image-container">
+            <img id="modalImage" src="" alt="">
+        </div>
+        <div class="modal-info">
+            <h3 id="modalCaption"></h3>
+            <p id="modalDate"></p>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p class="footer-text">© 2025 MEISHA VERNELL. ALL RIGHTS RESERVED.</p>
+    </footer>
+
+    <!-- Firebase Config -->
+    <script src="firebase-config.js"></script>
+    
+    <!-- Gallery Script -->
+    <script>
+        let allPhotos = [];
+        let currentFilter = 'all';
+
+        // ============================================
+        // LOAD GALLERY FROM FIRESTORE
+        // ============================================
+        async function loadGallery() {
+            const grid = document.getElementById('galleryGrid');
+            
+            try {
+                const snapshot = await firebase.firestore()
+                    .collection('gallery')
+                    .orderBy('uploadedAt', 'desc')
+                    .get();
+
+                if (snapshot.empty) {
+                    grid.innerHTML = `
+                        <div class="empty-state">
+                            <p>Gallery coming soon!</p>
+                            <p style="font-size: 0.8rem; color: var(--light-gray); margin-top: 10px;">
+                                Start uploading photos from the admin dashboard.
+                            </p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Convert Firestore docs to array
+                allPhotos = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+
+                renderGallery();
+            } catch (error) {
+                console.error('Error loading gallery:', error);
+                grid.innerHTML = '<div class="empty-state"><p>Error loading gallery</p></div>';
+            }
+        }
+
+        // ============================================
+        // RENDER GALLERY WITH FILTER
+        // ============================================
+        function renderGallery() {
+            const grid = document.getElementById('galleryGrid');
+            const filtered = currentFilter === 'all' 
+                ? allPhotos 
+                : allPhotos.filter(p => p.category === currentFilter);
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state">
+                        <p>No photos in this category yet</p>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = filtered.map((photo, index) => `
+                <div class="gallery-item" data-index="${index}" data-filter="${photo.category}">
+                    <img 
+                        src="${photo.url}" 
+                        alt="${photo.caption}"
+                        loading="lazy"
+                        class="gallery-image"
+                    >
+                    <div class="gallery-overlay">
+                        <p class="gallery-caption">${photo.caption || 'Air Force Journey'}</p>
+                        ${photo.date ? `<p class="gallery-date">${photo.date}</p>` : ''}
+                    </div>
+                </div>
+            `).join('');
+
+            // Add click listeners
+            document.querySelectorAll('.gallery-item').forEach((item, index) => {
+                item.addEventListener('click', () => {
+                    openModal(filtered[index]);
+                });
+            });
+        }
+
+        // ============================================
+        // MODAL
+        // ============================================
+        const modal = document.getElementById('imageModal');
+        const modalClose = document.getElementById('modalClose');
+
+        function openModal(photo) {
+            document.getElementById('modalImage').src = photo.url;
+            document.getElementById('modalCaption').textContent = photo.caption || 'Air Force Journey';
+            document.getElementById('modalDate').textContent = photo.date || '';
+            modal.classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            modal.classList.remove('show');
+            document.body.style.overflow = '';
+        }
+
+        modalClose.addEventListener('click', closeModal);
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
+        });
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeModal();
+        });
+
+        // ============================================
+        // FILTERS
+        // ============================================
+        document.querySelectorAll('.filter-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                currentFilter = tab.dataset.filter;
+                renderGallery();
+            });
+        });
+
+        // ============================================
+        // INITIALIZATION
+        // ============================================
+        document.addEventListener('DOMContentLoaded', loadGallery);
+
+        
+    </script>
+    
+    <!-- Navigation JS -->
+    <script src="main.js" defer></script>
+</body>
+</html>

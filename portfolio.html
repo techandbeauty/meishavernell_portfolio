@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portfolio | MEISHA VERNELL</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Bebas+Neue&family=Montserrat:wght@200;300;400;500&display=swap" rel="stylesheet">
+    
+    <!-- Global Styles -->
+    <link rel="stylesheet" href="main.css">
+    
+    <!-- Page Styles -->
+    <link rel="stylesheet" href="portfolio.css">
+</head>
+<body>
+    <div class="noise"></div>
+
+    <!-- Navigation -->
+    <nav class="nav" id="nav">
+        <div class="nav-links" id="navLinks">
+            <a href="portfolio.html" class="nav-link active" role="link" tabindex="0">Portfolio</a>
+            <a href="about.html" class="nav-link" role="link" tabindex="0">About</a>
+            <a href="gallery-firestore.html" class="nav-link" role="link" tabindex="0">The LookBook</a>
+            <a href="index.html" class="nav-link nav-star" role="link" tabindex="0">★</a>
+            <a href="asvab-firestore.html" class="nav-link" role="link" tabindex="0">ASVAB Prep</a>
+            <a href="connect.html" class="nav-link" role="link" tabindex="0">Connect</a>
+        </div>
+
+        <div class="nav-toggle" id="navToggle">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    </nav>
+    <div class="nav-overlay" id="navOverlay"></div>
+
+    <!-- Header -->
+    <header class="header">
+        <h1 class="header-title">PORTFOLIO</h1>
+        <p class="header-subtitle">Projects & Work</p>
+        <p class="header-description">
+            A collection of brands, applications, and digital experiences I've built. 
+            Click any project to learn more or visit the live site.
+        </p>
+    </header>
+
+    <!-- Filter Tabs -->
+    <div class="filter-tabs">
+        <button class="filter-tab active" data-filter="all">All</button>
+        <button class="filter-tab" data-filter="website">Websites</button>
+        <button class="filter-tab" data-filter="app">Apps</button>
+        <button class="filter-tab" data-filter="game">Games</button>
+        <button class="filter-tab" data-filter="brand">Brands</button>
+        <button class="filter-tab" data-filter="other">Other</button>
+    </div>
+
+    <!-- Portfolio Grid -->
+    <div class="portfolio-grid" id="portfolioGrid">
+        <!-- Loaded from Cloudinary -->
+    </div>
+
+    <!-- Featured Brands -->
+    <section class="featured-section">
+        <h2 class="section-title">LIVE BRANDS & WEBSITES</h2>
+        <div class="featured-brands">
+            <a href="https://usemarc.com" target="_blank" rel="noopener" class="brand-card">
+                <h3 class="brand-name">MARC</h3>
+                <p class="brand-url">usemarc.com</p>
+                <p class="brand-description">AI-powered marketing assistant platform for business growth and automation.</p>
+            </a>
+            <a href="https://codexlabsinstitute.com" target="_blank" rel="noopener" class="brand-card">
+                <h3 class="brand-name">Codex Labs Institute</h3>
+                <p class="brand-url">codexlabsinstitute.com</p>
+                <p class="brand-description">Technology education platform with beginner-friendly programming courses.</p>
+            </a>
+            <a href="https://nexustechdigitalsolutions.net" target="_blank" rel="noopener" class="brand-card">
+                <h3 class="brand-name">Nexus Tech Digital Solutions</h3>
+                <p class="brand-url">nexustechdigitalsolutions.net</p>
+                <p class="brand-description">Full-service tech company offering web, mobile, and game development.</p>
+            </a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p class="footer-text">© 2025 MEISHA VERNELL. ALL RIGHTS RESERVED.</p>
+    </footer>
+
+    <!-- Project Modal -->
+    <div class="project-modal" id="projectModal">
+        <button class="project-modal-close" id="modalClose">✕</button>
+        <div class="project-modal-content">
+            <div class="project-modal-image" id="modalImageContainer"></div>
+            <div class="project-modal-info">
+                <p class="project-modal-category" id="modalCategory"></p>
+                <h2 class="project-modal-title" id="modalTitle"></h2>
+                <p class="project-modal-description" id="modalDescription"></p>
+                <div class="project-modal-tech" id="modalTech"></div>
+                <div class="project-modal-actions" id="modalActions"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // CLOUDINARY CONFIGURATION
+        // ============================================
+        const CLOUDINARY_CLOUD_NAME = 'didqb05ko';
+        const CLOUDINARY_PORTFOLIO_TAG = 'mv-portfolio';
+        const GITHUB_USERNAME = 'techandbeauty'; // Your GitHub username
+
+        // Project metadata (matched by filename)
+        const PROJECT_METADATA = {
+            'marc': {
+                title: 'MARC',
+                category: 'website',
+                description: 'AI-powered marketing assistant platform. Features voice integration, social media automation, and cross-platform synchronization.',
+                technologies: ['React', 'Node.js', 'AI/ML', 'Firebase'],
+                status: 'Coming Soon',
+                liveUrl: null,
+                githubUrl: null
+            },
+            'codexlabs': {
+                title: 'Codex Labs Institute',
+                category: 'website',
+                description: 'Technology education platform with beginner-friendly programming courses in Python, iOS, and web development.',
+                technologies: ['HTML', 'CSS', 'JavaScript'],
+                liveUrl: 'https://codexlabsinstitute.com',
+                githubUrl: 'https://github.com/techandbeauty/Codex-Labs-Institute-Website'
+            },
+            'nexustech': {
+                title: 'Nexus Tech Digital Solutions',
+                category: 'brand',
+                description: 'Full-service tech company offering web, mobile, and game development services.',
+                technologies: ['HTML', 'CSS', 'JavaScript'],
+                liveUrl: 'https://nexustechdigitalsolutions.net',
+                githubUrl: 'https://github.com/techandbeauty/NexusTech-Service-Portal'
+            },
+            'meishavernell': {
+                title: 'Meisha Vernell',
+                category: 'brand',
+                description: 'Personal brand website with luxury dark theme, horizontal scrolling gallery, and Cloudinary integration.',
+                technologies: ['HTML', 'CSS', 'JavaScript', 'Cloudinary'],
+                liveUrl: 'https://meishavernell.com',
+                githubUrl: 'https://github.com/techandbeauty/meishavernell'
+            },
+            'techdeck': {
+                title: 'Tech Deck App',
+                category: 'app',
+                description: 'iOS flashcard-based study platform for technology certifications featuring TARA AI companion. Available on TestFlight.',
+                technologies: ['Swift', 'SwiftUI', 'Firebase', 'AI'],
+                liveUrl: null,
+                githubUrl: 'https://github.com/techandbeauty/Tech-Deck-App'
+            },
+            'tara': {
+                title: 'TARA AI Assistant',
+                category: 'app',
+                description: 'AI-powered teaching assistant integrated into Tech Deck. Provides personalized study guidance and certification prep.',
+                technologies: ['Swift', 'OpenAI API', 'Firebase'],
+                status: 'Coming Soon',
+                liveUrl: null,
+                githubUrl: null
+            },
+            'nexora': {
+                title: 'NeXora',
+                category: 'game',
+                description: 'Narrative-driven game about corporate betrayal and AI ownership, built in Unreal Engine.',
+                technologies: ['Unreal Engine', 'C++', 'Blueprints'],
+                liveUrl: null,
+                githubUrl: null
+            },
+            'cams-dashboard': {
+                title: 'CAMS Analytics Dashboard',
+                category: 'other',
+                description: 'Power BI dashboard for Consumer Assistance Case Management. Tracks cases, resolution times, and staff workload.',
+                technologies: ['Power BI', 'DAX', 'Dataverse', 'Excel'],
+                liveUrl: null,
+                githubUrl: 'https://github.com/techandbeauty/CAMS-Analytics-Dashboard'
+            },
+            'data-quality': {
+                title: 'Data Quality Framework',
+                category: 'data',
+                description: 'Automated data validation and quality checks for government case management systems.',
+                technologies: ['Python', 'Pandas', 'Power Query', 'Excel'],
+                liveUrl: null,
+                githubUrl: 'https://github.com/techandbeauty/Data-Quality-Framework'
+            }
+        };
+
+        // Default placeholder - fetched from Cloudinary mv-portfolio tag or fallback
+        const CLOUDINARY_CLOUD_NAME = 'didqb05ko';
+        const CLOUDINARY_PORTFOLIO_TAG = 'mv-portfolio';
+        const FALLBACK_IMAGE = 'https://res.cloudinary.com/didqb05ko/image/upload/c_fill,g_auto,w_800,h_800,q_auto,f_auto/IMG_4465_2_v42fzh.jpg';
+        
+        let defaultImageUrl = FALLBACK_IMAGE;
+        let allProjects = [];
+
+        // ============================================
+        // LOAD FROM CLOUDINARY
+        // ============================================
+        async function loadPortfolio() {
+            const grid = document.getElementById('portfolioGrid');
+            grid.innerHTML = Array(6).fill('<div class="portfolio-item loading"></div>').join('');
+
+            let cloudinaryMedia = [];
+            let githubProjects = [];
+
+            // Load from Cloudinary
+            try {
+                // Fetch images
+                const imgRes = await fetch(`https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/list/${CLOUDINARY_PORTFOLIO_TAG}.json?_=${Date.now()}`);
+                if (imgRes.ok) {
+                    const imgData = await imgRes.json();
+                    if (imgData.resources && imgData.resources.length > 0) {
+                        // Set first image as default
+                        const firstImg = imgData.resources[0];
+                        defaultImageUrl = `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload/c_fill,g_auto,w_800,h_800,q_auto,f_auto/${firstImg.public_id}.${firstImg.format}`;
+                        
+                        cloudinaryMedia = cloudinaryMedia.concat(imgData.resources.map(r => ({
+                            type: 'image',
+                            publicId: r.public_id,
+                            format: r.format,
+                            thumb: `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload/c_fill,g_auto,w_800,h_800,q_auto,f_auto/${r.public_id}.${r.format}`,
+                            full: `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload/q_auto,f_auto/${r.public_id}.${r.format}`
+                        })));
+                    }
+                }
+
+                // Fetch videos
+                const vidRes = await fetch(`https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/video/list/${CLOUDINARY_PORTFOLIO_TAG}.json?_=${Date.now()}`);
+                if (vidRes.ok) {
+                    const vidData = await vidRes.json();
+                    if (vidData.resources) {
+                        cloudinaryMedia = cloudinaryMedia.concat(vidData.resources.map(r => ({
+                            type: 'video',
+                            publicId: r.public_id,
+                            format: r.format,
+                            thumb: `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/video/upload/c_fill,w_800,h_800,q_auto,so_0/${r.public_id}.jpg`,
+                            full: `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/video/upload/q_auto/${r.public_id}.${r.format}`
+                        })));
+                    }
+                }
+
+                console.log(`Loaded ${cloudinaryMedia.length} items from Cloudinary`);
+            } catch (e) {
+                console.log('Cloudinary error:', e.message);
+            }
+
+            // Load from GitHub
+            try {
+                const ghRes = await fetch(`https://api.github.com/users/${GITHUB_USERNAME}/repos?sort=updated&per_page=30`);
+                if (ghRes.ok) {
+                    const repos = await ghRes.json();
+                    githubProjects = repos
+                        .filter(r => !r.fork) // Only exclude forks
+                        .map(r => ({
+                            title: formatName(r.name),
+                            category: detectCategory(r.name, r.description, r.language),
+                            description: r.description || `${r.language || 'Code'} project on GitHub.`,
+                            technologies: [r.language].filter(Boolean),
+                            liveUrl: r.homepage || null,
+                            githubUrl: r.html_url,
+                            image: `https://opengraph.githubassets.com/1/${GITHUB_USERNAME}/${r.name}`,
+                            fullImage: `https://opengraph.githubassets.com/1/${GITHUB_USERNAME}/${r.name}`,
+                            mediaType: 'image',
+                            isGitHub: true
+                        }));
+                    console.log(`Loaded ${githubProjects.length} repos from GitHub`);
+                } else {
+                    console.log('GitHub API error:', ghRes.status);
+                }
+            } catch (e) {
+                console.log('GitHub error:', e.message);
+            }
+
+            // Build projects list - Always show GitHub + Cloudinary
+            // Start with GitHub projects
+            if (githubProjects.length > 0) {
+                allProjects = githubProjects.map(p => ({
+                    ...p,
+                    image: defaultImageUrl, // Use your default photo
+                    fullImage: defaultImageUrl
+                }));
+            }
+
+            // Add Cloudinary media as additional projects (or replace matching ones)
+            if (cloudinaryMedia.length > 0) {
+                cloudinaryMedia.forEach((media) => {
+                    const filename = media.publicId.split('/').pop().toLowerCase().replace(/[^a-z0-9]/g, '');
+                    const meta = Object.entries(PROJECT_METADATA).find(([key]) => filename.includes(key));
+                    
+                    // Check if this matches an existing GitHub project
+                    const existingIndex = allProjects.findIndex(p => 
+                        filename.includes(p.title.toLowerCase().replace(/[^a-z0-9]/g, ''))
+                    );
+
+                    const project = {
+                        title: meta ? meta[1].title : formatName(media.publicId),
+                        category: meta ? meta[1].category : 'website',
+                        description: meta ? meta[1].description : 'A project from my portfolio.',
+                        technologies: meta ? meta[1].technologies : [],
+                        liveUrl: meta ? meta[1].liveUrl : null,
+                        githubUrl: meta ? meta[1].githubUrl : null,
+                        image: media.thumb,
+                        fullImage: media.full,
+                        mediaType: media.type
+                    };
+
+                    if (existingIndex >= 0) {
+                        // Replace with Cloudinary image but keep GitHub data
+                        allProjects[existingIndex] = {
+                            ...allProjects[existingIndex],
+                            image: media.thumb,
+                            fullImage: media.full,
+                            mediaType: media.type
+                        };
+                    } else {
+                        // Add as new project
+                        allProjects.push(project);
+                    }
+                });
+            }
+
+            // If still nothing, use fallback metadata
+            if (allProjects.length === 0) {
+                allProjects = Object.entries(PROJECT_METADATA).map(([id, meta]) => ({
+                    ...meta,
+                    image: defaultImageUrl,
+                    fullImage: defaultImageUrl,
+                    mediaType: 'image'
+                }));
+            }
+
+            renderProjects(allProjects);
+        }
+
+        function detectCategory(name, desc, lang) {
+            const n = (name || '').toLowerCase();
+            const d = (desc || '').toLowerCase();
+            if (n.includes('game') || d.includes('game')) return 'game';
+            if (n.includes('app') || d.includes('app') || d.includes('mobile')) return 'app';
+            return 'website';
+        }
+
+        function formatName(str) {
+            return str.split('/').pop().replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        }
+
+        // ============================================
+        // RENDER
+        // ============================================
+        function renderProjects(projects, filter = 'all') {
+            const grid = document.getElementById('portfolioGrid');
+            const filtered = filter === 'all' ? projects : projects.filter(p => p.category === filter);
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--light-gray);">
+                    <p>No projects found.</p>
+                    <p style="font-size:0.7rem;margin-top:10px;">Upload to Cloudinary with tag: <strong style="color:var(--gold);">mv-portfolio</strong></p>
+                </div>`;
+                return;
+            }
+
+            grid.innerHTML = filtered.map((p, i) => `
+                <div class="portfolio-item" data-index="${i}">
+                    ${p.status === 'Coming Soon' ? '<div class="coming-soon-badge">COMING SOON</div>' : ''}
+                    ${p.mediaType === 'video' ? 
+                        `<video src="${p.fullImage}" muted loop playsinline poster="${p.image}" 
+                                onmouseenter="this.play()" onmouseleave="this.pause();this.currentTime=0;"></video>` :
+                        `<img src="${p.image}" alt="${p.title}" loading="lazy" onerror="this.src='${defaultImageUrl}'">`
+                    }
+                    <div class="portfolio-overlay">
+                        <h3 class="portfolio-title">${p.title}</h3>
+                        <p class="portfolio-category">${p.category}</p>
+                        ${p.mediaType === 'video' ? '<p class="portfolio-video-hint">▶ VIDEO</p>' : ''}
+                    </div>
+                </div>
+            `).join('');
+
+            document.querySelectorAll('.portfolio-item').forEach(item => {
+                item.addEventListener('click', () => openModal(filtered[parseInt(item.dataset.index)]));
+            });
+        }
+
+        // ============================================
+        // FILTERS
+        // ============================================
+        document.querySelectorAll('.filter-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                renderProjects(allProjects, tab.dataset.filter);
+            });
+        });
+
+        // ============================================
+        // MODAL
+        // ============================================
+        const modal = document.getElementById('projectModal');
+
+        function openModal(project) {
+            const container = document.getElementById('modalImageContainer');
+            container.innerHTML = project.mediaType === 'video' ?
+                `<video src="${project.fullImage}" controls autoplay style="width:100%;height:100%;object-fit:cover;"></video>` :
+                `<img src="${project.fullImage || project.image}" alt="${project.title}" style="width:100%;height:100%;object-fit:cover;">`;
+
+            document.getElementById('modalCategory').textContent = project.category;
+            document.getElementById('modalTitle').textContent = project.title;
+            document.getElementById('modalDescription').textContent = project.description;
+            document.getElementById('modalTech').innerHTML = (project.technologies || []).map(t => `<span class="tech-tag">${t}</span>`).join('');
+            
+            let actions = '';
+            if (project.liveUrl) actions += `<a href="${project.liveUrl}" target="_blank" class="project-btn project-btn-primary">VISIT SITE</a>`;
+            if (project.githubUrl) actions += `<a href="${project.githubUrl}" target="_blank" class="project-btn project-btn-secondary">VIEW CODE</a>`;
+            if (!project.liveUrl && !project.githubUrl) actions = `<span class="project-btn project-btn-secondary" style="opacity:0.5;">COMING SOON</span>`;
+            document.getElementById('modalActions').innerHTML = actions;
+
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+            const video = document.querySelector('#modalImageContainer video');
+            if (video) video.pause();
+        }
+
+        document.getElementById('modalClose').addEventListener('click', closeModal);
+        modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', loadPortfolio);
+
+        
+
+            </script>
+    
+    <!-- Navigation JS -->
+    <script src="main.js" defer></script>
+</body>
+</html>

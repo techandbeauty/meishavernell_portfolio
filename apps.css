@@ -1,0 +1,25 @@
+/* ============================================================
+   APPS.CSS — Apps & Products Page
+   Supplemental styles for apps.html
+   Main styles live in the <style> block inside apps.html
+   ============================================================ */
+
+/* Any overrides or additions go here.
+   The inline <style> block in apps.html handles all core layout. */
+
+/* ── ASVAB card visual bg gradient polish ── */
+#web-section .app-visual-bg {
+    filter: blur(40px) saturate(0.8) brightness(0.5);
+    opacity: 0.35;
+}
+
+/* ── Make the Web tab gold-accented when active ── */
+.tab-btn.active {
+    color: #f5f5f0;
+}
+
+/* ── Ensure emoji icon stays centered in app-icon ── */
+.app-icon[style*="font-size"] {
+    border-radius: 22px;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.05);
+}

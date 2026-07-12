@@ -1,0 +1,99 @@
+// ============================================
+// MAIN.JS - Global JavaScript for meishavernell.com
+// ============================================
+
+'use strict';
+
+// ============================================
+// NAVIGATION
+// ============================================
+
+// Navigation scroll effect
+window.addEventListener('scroll', () => {
+    const nav = document.getElementById('nav');
+    if (nav) {
+        if (window.scrollY > 50) {
+            nav.classList.add('scrolled');
+        } else {
+            nav.classList.remove('scrolled');
+        }
+    }
+});
+
+// Mobile navigation toggle
+function toggleMobileNav() {
+    const navLinks = document.getElementById('navLinks');
+    const navOverlay = document.getElementById('navOverlay');
+    
+    if (navLinks && navOverlay) {
+        const isActive = navLinks.classList.contains('active');
+        
+        if (isActive) {
+            navLinks.classList.remove('active');
+            navOverlay.classList.remove('active');
+            document.body.style.overflow = '';
+        } else {
+            navLinks.classList.add('active');
+            navOverlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+    }
+}
+
+// Close mobile navigation
+function closeMobileNav() {
+    const navLinks = document.getElementById('navLinks');
+    const navOverlay = document.getElementById('navOverlay');
+    
+    if (navLinks && navOverlay) {
+        navLinks.classList.remove('active');
+        navOverlay.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+}
+
+// Initialize navigation
+function initNav() {
+    const navToggle = document.getElementById('navToggle');
+    const navOverlay = document.getElementById('navOverlay');
+    
+    if (navToggle) {
+        navToggle.addEventListener('click', toggleMobileNav);
+    }
+    
+    if (navOverlay) {
+        navOverlay.addEventListener('click', closeMobileNav);
+    }
+    
+    // Do NOT add click handlers to nav links - let them navigate naturally
+    // The browser will handle navigation, menu will close on page load
+}
+
+// Initialize navigation immediately (defer ensures DOM is ready)
+initNav();
+
+// ============================================
+// UTILITY FUNCTIONS
+// ============================================
+
+// Smooth scroll to element
+function smoothScrollTo(elementId) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+}
+
+// Debounce function for performance
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
