@@ -19,11 +19,6 @@ service firebase.storage {
       allow write: if isAdmin();
     }
 
-    match /asvab/{fileName} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
     // Member-portal content - only signed-in members can view, only admin
     // can upload/delete.
     match /studyNotes/{fileName} {

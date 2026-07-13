@@ -5,8 +5,8 @@ rules_version = '2';
 //
 // >>> REPLACE THIS with the email you log into admin-dashboard.html with <<<
 // This is the ONLY account allowed to create/edit/delete gallery photos,
-// ASVAB materials, practice tests, flashcards, study notes, and live
-// sessions. Everyone else who signs in (portal members) can only read.
+// practice tests, flashcards, study notes, and live sessions. Everyone
+// else who signs in (portal members) can only read.
 //
 //   const ADMIN_EMAIL = "youradminemail@example.com";
 //
@@ -28,11 +28,6 @@ service cloud.firestore {
     // ---------- Public site content (existing) ----------
 
     match /gallery/{docId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
-
-    match /asvab/{docId} {
       allow read: if true;
       allow write: if isAdmin();
     }
