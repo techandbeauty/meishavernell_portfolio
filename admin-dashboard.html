@@ -542,7 +542,6 @@
         <!-- Tabs -->
         <div class="dashboard-tabs">
             <button class="tab-btn active" data-tab="gallery">Gallery</button>
-            <button class="tab-btn" data-tab="asvab">ASVAB Content</button>
             <button class="tab-btn" data-tab="practice">Practice Tests</button>
             <button class="tab-btn" data-tab="flashcards">Flashcards</button>
             <button class="tab-btn" data-tab="notes">Study Notes</button>
@@ -603,66 +602,6 @@
                 <h2 class="section-title">Your Photos</h2>
                 <div class="loading" id="galleryLoading">Loading photos...</div>
                 <div class="gallery-items" id="galleryItems"></div>
-            </div>
-        </div>
-
-        <!-- ASVAB Tab -->
-        <div class="tab-content" id="asvab-tab">
-            <div class="content-section">
-                <h2 class="section-title">Upload Study Material</h2>
-                <form class="upload-form" id="asvabUploadForm">
-                    <div class="status-message" id="asvabStatus"></div>
-
-                    <div class="form-row full">
-                        <div class="form-group">
-                            <label for="asvabTitle">Study Material Title</label>
-                            <input type="text" id="asvabTitle" placeholder="e.g., Arithmetic Reasoning Notes" required>
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="asvabCategory">Subject</label>
-                            <select id="asvabCategory" required>
-                                <option value="arithmetic">Arithmetic Reasoning</option>
-                                <option value="word-knowledge">Word Knowledge</option>
-                                <option value="comprehension">Paragraph Comprehension</option>
-                                <option value="math">Mathematics Knowledge</option>
-                                <option value="science">General Science</option>
-                                <option value="mechanical">Mechanical Comprehension</option>
-                                <option value="electronics">Electronics Information</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Document (PDF/DOC)</label>
-                            <div class="file-input-wrapper">
-                                <label class="file-input-label" for="asvabFile">
-                                    <div>📄 Click to upload</div>
-                                    <div class="file-name" id="asvabFileName"></div>
-                                </label>
-                                <input type="file" id="asvabFile" accept=".pdf,.doc,.docx">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="form-row full">
-                        <div class="form-group">
-                            <label for="asvabContent">Study Notes</label>
-                            <textarea id="asvabContent" placeholder="Type your study notes here..."></textarea>
-                        </div>
-                    </div>
-
-                    <div class="btn-group">
-                        <button type="submit" class="btn" id="asvabUploadBtn">SAVE MATERIAL</button>
-                        <button type="reset" class="btn secondary">CLEAR</button>
-                    </div>
-                </form>
-            </div>
-
-            <div class="content-section">
-                <h2 class="section-title">Study Materials</h2>
-                <div class="loading" id="asvabLoading">Loading materials...</div>
-                <div id="asvabItems"></div>
             </div>
         </div>
 
@@ -912,7 +851,6 @@
             loginContainer.style.display = 'none';
             dashboardContainer.style.display = 'block';
             loadGalleryPhotos();
-            loadASVABMaterials();
             loadPracticeQuestions();
             loadFlashcards();
             loadNotes();
@@ -1100,105 +1038,6 @@
                 showStatus('galleryStatus', '✓ Photo deleted', 'success');
             } catch (error) {
                 showStatus('galleryStatus', `Error: ${error.message}`, 'error');
-            }
-        }
-
-        // ============================================
-        // ASVAB UPLOAD
-        // ============================================
-        const asvabUploadForm = document.getElementById('asvabUploadForm');
-        const asvabFile = document.getElementById('asvabFile');
-        const asvabFileName = document.getElementById('asvabFileName');
-
-        asvabFile.addEventListener('change', (e) => {
-            const fileName = e.target.files[0]?.name || '';
-            asvabFileName.textContent = fileName;
-        });
-
-        asvabUploadForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-
-            const title = document.getElementById('asvabTitle').value;
-            const category = document.getElementById('asvabCategory').value;
-            const content = document.getElementById('asvabContent').value;
-            const file = asvabFile.files[0];
-            const uploadBtn = document.getElementById('asvabUploadBtn');
-
-            uploadBtn.disabled = true;
-            uploadBtn.textContent = 'SAVING...';
-
-            try {
-                let fileUrl = '';
-                if (file) {
-                    const timestamp = Date.now();
-                    const storageRef = firebase.storage().ref(`asvab/${timestamp}-${file.name}`);
-                    const snapshot = await storageRef.put(file);
-                    fileUrl = await snapshot.ref.getDownloadURL();
-                }
-
-                await firebase.firestore().collection('asvab').add({
-                    title: title,
-                    category: category,
-                    content: content,
-                    fileUrl: fileUrl || '',
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-
-                showStatus('asvabStatus', '✓ Study material saved!', 'success');
-                asvabUploadForm.reset();
-                asvabFileName.textContent = '';
-                loadASVABMaterials();
-            } catch (error) {
-                showStatus('asvabStatus', `Error: ${error.message}`, 'error');
-            }
-
-            uploadBtn.disabled = false;
-            uploadBtn.textContent = 'SAVE MATERIAL';
-        });
-
-        async function loadASVABMaterials() {
-            const container = document.getElementById('asvabItems');
-            const loading = document.getElementById('asvabLoading');
-
-            try {
-                const snapshot = await firebase.firestore()
-                    .collection('asvab')
-                    .orderBy('createdAt', 'desc')
-                    .get();
-
-                loading.style.display = 'none';
-
-                if (snapshot.empty) {
-                    container.innerHTML = '<p style="text-align: center; color: var(--light-gray);">No materials yet. Create your first study material above!</p>';
-                    return;
-                }
-
-                container.innerHTML = snapshot.docs.map(doc => {
-                    const data = doc.data();
-                    return `
-                        <div style="background: var(--dark-gray); border: 1px solid var(--mid-gray); padding: 20px; margin-bottom: 20px;">
-                            <h3 style="color: var(--white); margin-bottom: 8px;">${data.title}</h3>
-                            <p style="font-size: 0.8rem; color: var(--gold); margin-bottom: 12px; text-transform: uppercase;">${data.category}</p>
-                            <p style="color: var(--light-gray); margin-bottom: 15px; line-height: 1.6;">${data.content.substring(0, 200)}...</p>
-                            ${data.fileUrl ? `<p style="font-size: 0.85rem; color: var(--gold); margin-bottom: 15px;"><a href="${data.fileUrl}" target="_blank" style="color: var(--gold);">📄 View Document</a></p>` : ''}
-                            <button onclick="deleteASVABMaterial('${doc.id}')" style="background: transparent; border: 1px solid var(--mid-gray); color: #fca5a5; padding: 8px 15px; cursor: pointer; font-size: 0.8rem;">DELETE</button>
-                        </div>
-                    `;
-                }).join('');
-            } catch (error) {
-                loading.innerHTML = `<p style="color: #fca5a5;">Error loading materials: ${error.message}</p>`;
-            }
-        }
-
-        async function deleteASVABMaterial(docId) {
-            if (!confirm('Delete this material?')) return;
-
-            try {
-                await firebase.firestore().collection('asvab').doc(docId).delete();
-                loadASVABMaterials();
-                showStatus('asvabStatus', '✓ Material deleted', 'success');
-            } catch (error) {
-                showStatus('asvabStatus', `Error: ${error.message}`, 'error');
             }
         }
 

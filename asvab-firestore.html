@@ -106,12 +106,16 @@
         </div>
     </section>
 
-    <!-- Study Materials Section -->
+    <!-- Member Portal CTA - full study materials, practice tests,
+         flashcards and live sessions live behind member login -->
     <section class="study-materials-section">
-        <h2 class="section-title">STUDY MATERIALS BY SUBJECT</h2>
-        <div class="materials-filters" id="materialsFilters"></div>
-        <div class="materials-grid" id="materialsGrid">
-            <div class="loading">Loading study materials...</div>
+        <h2 class="section-title">THE FULL LIBRARY IS IN THE MEMBER PORTAL</h2>
+        <p style="text-align: center; color: var(--light-gray); max-width: 560px; margin: 0 auto 30px; line-height: 1.7;">
+            Practice tests, flashcards, study notes, and live session sign-ups are all inside the member portal - free to join.
+        </p>
+        <div style="text-align: center;">
+            <a href="portal.html" class="cta-btn" style="display: inline-block; text-decoration: none; margin-right: 12px;">GO TO PORTAL</a>
+            <a href="index.html#connect" class="cta-btn" style="display: inline-block; text-decoration: none; background: transparent; border: 1px solid var(--gold); color: var(--gold);">JOIN NOW</a>
         </div>
     </section>
 
@@ -192,104 +196,9 @@
     
     <!-- Page JavaScript -->
     <script>
-        // ============================================
-        // LOAD STUDY MATERIALS FROM FIRESTORE
-        // ============================================
-        const categoryFilter = {};
-
-        async function loadStudyMaterials() {
-            const container = document.getElementById('materialsGrid');
-            const filtersContainer = document.getElementById('materialsFilters');
-
-            try {
-                const snapshot = await firebase.firestore()
-                    .collection('asvab')
-                    .orderBy('createdAt', 'desc')
-                    .get();
-
-                if (snapshot.empty) {
-                    container.innerHTML = `
-                        <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: var(--light-gray);">
-                            <p style="font-size: 1rem; margin-bottom: 10px;">Study materials coming soon!</p>
-                            <p style="font-size: 0.8rem;">Check back later for exclusive ASVAB study notes and practice materials.</p>
-                        </div>
-                    `;
-                    return;
-                }
-
-                const materials = snapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
-                }));
-
-                // Get unique categories
-                const categories = [...new Set(materials.map(m => m.category))];
-
-                // Build filter buttons
-                filtersContainer.innerHTML = `
-                    <button class="material-filter active" data-filter="all">All</button>
-                    ${categories.map(cat => `
-                        <button class="material-filter" data-filter="${cat}">
-                            ${formatCategoryName(cat)}
-                        </button>
-                    `).join('')}
-                `;
-
-                // Add filter click handlers
-                document.querySelectorAll('.material-filter').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        document.querySelectorAll('.material-filter').forEach(b => b.classList.remove('active'));
-                        btn.classList.add('active');
-                        renderMaterials(materials, btn.dataset.filter);
-                    });
-                });
-
-                renderMaterials(materials, 'all');
-            } catch (error) {
-                console.error('Error loading materials:', error);
-                container.innerHTML = '<div style="grid-column: 1 / -1; color: #fca5a5;">Error loading materials</div>';
-            }
-        }
-
-        function renderMaterials(materials, filter) {
-            const container = document.getElementById('materialsGrid');
-            const filtered = filter === 'all' 
-                ? materials 
-                : materials.filter(m => m.category === filter);
-
-            if (filtered.length === 0) {
-                container.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; color: var(--light-gray); padding: 40px;">No materials in this category</div>';
-                return;
-            }
-
-            container.innerHTML = filtered.map(material => `
-                <div class="material-card">
-                    <div class="material-header">
-                        <h3 class="material-title">${material.title}</h3>
-                        <span class="material-category">${formatCategoryName(material.category)}</span>
-                    </div>
-                    <p class="material-content">${material.content.substring(0, 200)}...</p>
-                    ${material.fileUrl ? `
-                        <a href="${material.fileUrl}" target="_blank" class="material-link">
-                            📄 Download Document
-                        </a>
-                    ` : ''}
-                </div>
-            `).join('');
-        }
-
-        function formatCategoryName(cat) {
-            const names = {
-                'arithmetic': 'Arithmetic Reasoning',
-                'word-knowledge': 'Word Knowledge',
-                'comprehension': 'Paragraph Comprehension',
-                'math': 'Mathematics',
-                'science': 'Science',
-                'mechanical': 'Mechanical',
-                'electronics': 'Electronics'
-            };
-            return names[cat] || cat;
-        }
+        // Study materials, practice tests, flashcards and live sessions
+        // now live in portal.html behind member login - see the CTA
+        // section above. Nothing to load here anymore.
 
         // ============================================
         // MODAL MANAGEMENT
@@ -432,12 +341,6 @@
             }
         });
 
-        // ============================================
-        // INITIALIZATION
-        // ============================================
-        document.addEventListener('DOMContentLoaded', loadStudyMaterials);
-
-        
     </script>
     
     <!-- Navigation JS -->
