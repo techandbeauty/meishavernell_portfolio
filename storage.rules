@@ -19,6 +19,21 @@ service firebase.storage {
       allow write: if isAdmin();
     }
 
+    match /siteMedia/{fileName} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /heroSlides/{fileName} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /portfolioMedia/{fileName} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     // Member-portal content - only signed-in members can view, only admin
     // can upload/delete.
     match /studyNotes/{fileName} {

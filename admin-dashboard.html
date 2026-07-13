@@ -542,6 +542,7 @@
         <!-- Tabs -->
         <div class="dashboard-tabs">
             <button class="tab-btn active" data-tab="gallery">Gallery</button>
+            <button class="tab-btn" data-tab="sitephotos">Site Photos</button>
             <button class="tab-btn" data-tab="practice">Practice Tests</button>
             <button class="tab-btn" data-tab="flashcards">Flashcards</button>
             <button class="tab-btn" data-tab="notes">Study Notes</button>
@@ -602,6 +603,71 @@
                 <h2 class="section-title">Your Photos</h2>
                 <div class="loading" id="galleryLoading">Loading photos...</div>
                 <div class="gallery-items" id="galleryItems"></div>
+            </div>
+        </div>
+
+        <!-- Site Photos Tab - replaces Cloudinary for the homepage hero
+             slideshow, About page photos, Apps page icons, and Portfolio -->
+        <div class="tab-content" id="sitephotos-tab">
+            <div class="content-section">
+                <h2 class="section-title">Upload Site Photo</h2>
+                <form class="upload-form" id="siteMediaUploadForm">
+                    <div class="status-message" id="siteMediaStatus"></div>
+
+                    <div class="form-row full">
+                        <div class="form-group">
+                            <label for="siteMediaDestination">Where should this go?</label>
+                            <select id="siteMediaDestination" required>
+                                <option value="hero-slide">Homepage - Hero Slideshow (adds a slide)</option>
+                                <option value="intro-video">Homepage - Intro Video</option>
+                                <option value="about-creator">About Page - "The Creator" photo</option>
+                                <option value="about-engineer">About Page - "The Engineer" photo</option>
+                                <option value="apps-praxis">Apps Page - Praxis icon</option>
+                                <option value="apps-marc">Apps Page - MARC icon</option>
+                                <option value="apps-asvab">Apps Page - ASVAB background</option>
+                                <option value="portfolio">Portfolio - project photo/video</option>
+                            </select>
+                            <p style="font-size: 0.7rem; color: var(--light-gray); margin-top: 6px;">
+                                "Hero Slideshow" and "Portfolio" add a new item each time. Every other option replaces what's currently there.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="form-row full" id="portfolioFieldsRow" style="display: none;">
+                        <div class="form-group">
+                            <label for="portfolioProjectKey">Match to project (optional)</label>
+                            <input type="text" id="portfolioProjectKey" placeholder="e.g. marc, codexlabs, or a GitHub repo name">
+                        </div>
+                        <div class="form-group">
+                            <label for="portfolioTitle">Title (only used if not matched to a project)</label>
+                            <input type="text" id="portfolioTitle" placeholder="e.g. Weekend Hack Project">
+                        </div>
+                    </div>
+
+                    <div class="form-row full">
+                        <div class="form-group">
+                            <label>Photo or Video</label>
+                            <div class="file-input-wrapper">
+                                <label class="file-input-label" for="siteMediaFile">
+                                    <div>📷 Click to upload</div>
+                                    <div class="file-name" id="siteMediaFileName"></div>
+                                </label>
+                                <input type="file" id="siteMediaFile" accept="image/*,video/*" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="btn-group">
+                        <button type="submit" class="btn" id="siteMediaUploadBtn">UPLOAD</button>
+                        <button type="reset" class="btn secondary">CLEAR</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="content-section">
+                <h2 class="section-title">Current Site Photos</h2>
+                <div class="loading" id="siteMediaLoading">Loading...</div>
+                <div id="siteMediaItems"></div>
             </div>
         </div>
 
@@ -851,6 +917,7 @@
             loginContainer.style.display = 'none';
             dashboardContainer.style.display = 'block';
             loadGalleryPhotos();
+            loadSiteMedia();
             loadPracticeQuestions();
             loadFlashcards();
             loadNotes();
@@ -1038,6 +1105,204 @@
                 showStatus('galleryStatus', '✓ Photo deleted', 'success');
             } catch (error) {
                 showStatus('galleryStatus', `Error: ${error.message}`, 'error');
+            }
+        }
+
+        // ============================================
+        // SITE PHOTOS (hero slideshow, about, apps, portfolio)
+        // ============================================
+        const SINGLE_SLOTS = ['intro-video', 'about-creator', 'about-engineer', 'apps-praxis', 'apps-marc', 'apps-asvab'];
+        const SLOT_LABELS = {
+            'intro-video': 'Homepage Intro Video',
+            'about-creator': 'About - The Creator',
+            'about-engineer': 'About - The Engineer',
+            'apps-praxis': 'Apps - Praxis icon',
+            'apps-marc': 'Apps - MARC icon',
+            'apps-asvab': 'Apps - ASVAB background'
+        };
+
+        const siteMediaDestination = document.getElementById('siteMediaDestination');
+        const portfolioFieldsRow = document.getElementById('portfolioFieldsRow');
+        const siteMediaFile = document.getElementById('siteMediaFile');
+        const siteMediaFileName = document.getElementById('siteMediaFileName');
+
+        siteMediaDestination.addEventListener('change', () => {
+            portfolioFieldsRow.style.display = siteMediaDestination.value === 'portfolio' ? 'flex' : 'none';
+            siteMediaFile.accept = siteMediaDestination.value === 'intro-video' ? 'video/*' : 'image/*,video/*';
+        });
+
+        siteMediaFile.addEventListener('change', (e) => {
+            siteMediaFileName.textContent = e.target.files[0]?.name || '';
+        });
+
+        document.getElementById('siteMediaUploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const destination = siteMediaDestination.value;
+            const file = siteMediaFile.files[0];
+            const uploadBtn = document.getElementById('siteMediaUploadBtn');
+
+            if (!file) {
+                showStatus('siteMediaStatus', 'Please choose a photo or video', 'error');
+                return;
+            }
+
+            uploadBtn.disabled = true;
+            uploadBtn.textContent = 'UPLOADING...';
+
+            try {
+                const timestamp = Date.now();
+                const type = file.type.startsWith('video/') ? 'video' : 'image';
+
+                if (destination === 'hero-slide') {
+                    const storageRef = firebase.storage().ref(`heroSlides/${timestamp}-${file.name}`);
+                    const snapshot = await storageRef.put(file);
+                    const url = await snapshot.ref.getDownloadURL();
+                    await firebase.firestore().collection('heroSlides').add({
+                        url, type, order: timestamp,
+                        storagePath: `heroSlides/${timestamp}-${file.name}`,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                } else if (destination === 'portfolio') {
+                    const storageRef = firebase.storage().ref(`portfolioMedia/${timestamp}-${file.name}`);
+                    const snapshot = await storageRef.put(file);
+                    const url = await snapshot.ref.getDownloadURL();
+                    await firebase.firestore().collection('portfolioMedia').add({
+                        url, type,
+                        projectKey: document.getElementById('portfolioProjectKey').value.trim().toLowerCase(),
+                        title: document.getElementById('portfolioTitle').value.trim(),
+                        storagePath: `portfolioMedia/${timestamp}-${file.name}`,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                } else {
+                    // Single named slot - replaces whatever was there before
+                    const storageRef = firebase.storage().ref(`siteMedia/${destination}-${timestamp}-${file.name}`);
+                    const snapshot = await storageRef.put(file);
+                    const url = await snapshot.ref.getDownloadURL();
+                    await firebase.firestore().collection('siteMedia').doc(destination).set({
+                        url, type,
+                        storagePath: `siteMedia/${destination}-${timestamp}-${file.name}`,
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+
+                showStatus('siteMediaStatus', '✓ Uploaded!', 'success');
+                document.getElementById('siteMediaUploadForm').reset();
+                siteMediaFileName.textContent = '';
+                portfolioFieldsRow.style.display = 'none';
+                loadSiteMedia();
+            } catch (error) {
+                showStatus('siteMediaStatus', `Error: ${error.message}`, 'error');
+            }
+
+            uploadBtn.disabled = false;
+            uploadBtn.textContent = 'UPLOAD';
+        });
+
+        async function loadSiteMedia() {
+            const container = document.getElementById('siteMediaItems');
+            const loading = document.getElementById('siteMediaLoading');
+
+            try {
+                const [slotsSnap, heroSnap, portfolioSnap] = await Promise.all([
+                    firebase.firestore().collection('siteMedia').get(),
+                    firebase.firestore().collection('heroSlides').orderBy('order', 'desc').get(),
+                    firebase.firestore().collection('portfolioMedia').orderBy('createdAt', 'desc').get()
+                ]);
+
+                loading.style.display = 'none';
+
+                let html = '';
+
+                if (!slotsSnap.empty) {
+                    html += '<h3 style="color: var(--gold); font-size: 0.75rem; letter-spacing: 0.1rem; text-transform: uppercase; margin-bottom: 12px;">Fixed Photo Slots</h3>';
+                    html += '<div class="gallery-items">' + slotsSnap.docs.map(doc => {
+                        const data = doc.data();
+                        const preview = data.type === 'video'
+                            ? `<video src="${data.url}" muted style="width:100%;aspect-ratio:1;object-fit:cover;"></video>`
+                            : `<img src="${data.url}" style="width:100%;aspect-ratio:1;object-fit:cover;">`;
+                        return `
+                            <div style="background: var(--dark-gray); border: 1px solid var(--mid-gray); padding: 10px;">
+                                ${preview}
+                                <p style="font-size: 0.7rem; color: var(--light-gray); margin: 8px 0;">${SLOT_LABELS[doc.id] || doc.id}</p>
+                                <button onclick="deleteSiteMediaSlot('${doc.id}', '${data.storagePath || ''}')" style="width:100%; background: transparent; border: 1px solid var(--mid-gray); color: #fca5a5; padding: 6px; cursor: pointer; font-size: 0.7rem;">DELETE</button>
+                            </div>
+                        `;
+                    }).join('') + '</div>';
+                }
+
+                if (!heroSnap.empty) {
+                    html += '<h3 style="color: var(--gold); font-size: 0.75rem; letter-spacing: 0.1rem; text-transform: uppercase; margin: 24px 0 12px;">Hero Slideshow</h3>';
+                    html += '<div class="gallery-items">' + heroSnap.docs.map(doc => {
+                        const data = doc.data();
+                        const preview = data.type === 'video'
+                            ? `<video src="${data.url}" muted style="width:100%;aspect-ratio:1;object-fit:cover;"></video>`
+                            : `<img src="${data.url}" style="width:100%;aspect-ratio:1;object-fit:cover;">`;
+                        return `
+                            <div style="background: var(--dark-gray); border: 1px solid var(--mid-gray); padding: 10px;">
+                                ${preview}
+                                <button onclick="deleteHeroSlide('${doc.id}', '${data.storagePath || ''}')" style="width:100%; margin-top:8px; background: transparent; border: 1px solid var(--mid-gray); color: #fca5a5; padding: 6px; cursor: pointer; font-size: 0.7rem;">DELETE</button>
+                            </div>
+                        `;
+                    }).join('') + '</div>';
+                }
+
+                if (!portfolioSnap.empty) {
+                    html += '<h3 style="color: var(--gold); font-size: 0.75rem; letter-spacing: 0.1rem; text-transform: uppercase; margin: 24px 0 12px;">Portfolio Media</h3>';
+                    html += '<div class="gallery-items">' + portfolioSnap.docs.map(doc => {
+                        const data = doc.data();
+                        const preview = data.type === 'video'
+                            ? `<video src="${data.url}" muted style="width:100%;aspect-ratio:1;object-fit:cover;"></video>`
+                            : `<img src="${data.url}" style="width:100%;aspect-ratio:1;object-fit:cover;">`;
+                        return `
+                            <div style="background: var(--dark-gray); border: 1px solid var(--mid-gray); padding: 10px;">
+                                ${preview}
+                                <p style="font-size: 0.7rem; color: var(--light-gray); margin: 8px 0;">${data.projectKey || data.title || 'Standalone'}</p>
+                                <button onclick="deletePortfolioMedia('${doc.id}', '${data.storagePath || ''}')" style="width:100%; background: transparent; border: 1px solid var(--mid-gray); color: #fca5a5; padding: 6px; cursor: pointer; font-size: 0.7rem;">DELETE</button>
+                            </div>
+                        `;
+                    }).join('') + '</div>';
+                }
+
+                container.innerHTML = html || '<p style="text-align: center; color: var(--light-gray);">No site photos uploaded yet.</p>';
+            } catch (error) {
+                loading.innerHTML = `<p style="color: #fca5a5;">Error loading site photos: ${error.message}</p>`;
+            }
+        }
+
+        async function deleteSiteMediaSlot(slotId, storagePath) {
+            if (!confirm('Delete this photo? The page will show its default image until you upload a new one.')) return;
+            try {
+                if (storagePath) await firebase.storage().ref(storagePath).delete();
+                await firebase.firestore().collection('siteMedia').doc(slotId).delete();
+                loadSiteMedia();
+                showStatus('siteMediaStatus', '✓ Deleted', 'success');
+            } catch (error) {
+                showStatus('siteMediaStatus', `Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function deleteHeroSlide(docId, storagePath) {
+            if (!confirm('Delete this slide?')) return;
+            try {
+                if (storagePath) await firebase.storage().ref(storagePath).delete();
+                await firebase.firestore().collection('heroSlides').doc(docId).delete();
+                loadSiteMedia();
+                showStatus('siteMediaStatus', '✓ Deleted', 'success');
+            } catch (error) {
+                showStatus('siteMediaStatus', `Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function deletePortfolioMedia(docId, storagePath) {
+            if (!confirm('Delete this portfolio media?')) return;
+            try {
+                if (storagePath) await firebase.storage().ref(storagePath).delete();
+                await firebase.firestore().collection('portfolioMedia').doc(docId).delete();
+                loadSiteMedia();
+                showStatus('siteMediaStatus', '✓ Deleted', 'success');
+            } catch (error) {
+                showStatus('siteMediaStatus', `Error: ${error.message}`, 'error');
             }
         }
 

@@ -7,10 +7,14 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Bebas+Neue&family=Montserrat:wght@200;300;400;500;600&display=swap" rel="stylesheet">
-    
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore-compat.js"></script>
+
     <!-- Global Styles -->
     <link rel="stylesheet" href="main.css">
-    
+
     <!-- Page Styles -->
     <link rel="stylesheet" href="about.css">
 </head>
@@ -325,43 +329,33 @@
         <p class="footer-text">© 2027 MEISHA VERNELL. ALL RIGHTS RESERVED.</p>
     </footer>
 
+    <!-- Firebase Config -->
+    <script src="firebase-config.js"></script>
+
     <script>
-        const CLOUDINARY_CLOUD_NAME = 'didqb05ko';
-
-        // Load images from Cloudinary by tag
+        // Load the Creator/Engineer photos - falls back to the default
+        // image already in the <img> tag if nothing's been uploaded yet.
         async function loadAboutImages() {
-            // Load Creator image (tagged: mv-about-creator)
             try {
-                const creatorRes = await fetch(`https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/list/mv-about-creator.json?_=${Date.now()}`);
-                if (creatorRes.ok) {
-                    const data = await creatorRes.json();
-                    if (data.resources && data.resources.length > 0) {
-                        const img = data.resources[0];
-                        document.getElementById('creatorImage').src = 
-                            `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload/q_auto,f_auto/${img.public_id}.${img.format}`;
-                    }
-                }
-            } catch (e) { console.log('Creator image not found'); }
+                const db = firebase.firestore();
+                const [creatorDoc, engineerDoc] = await Promise.all([
+                    db.collection('siteMedia').doc('about-creator').get(),
+                    db.collection('siteMedia').doc('about-engineer').get()
+                ]);
 
-            // Load Engineer image (tagged: mv-about-engineer)
-            try {
-                const engineerRes = await fetch(`https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/list/mv-about-engineer.json?_=${Date.now()}`);
-                if (engineerRes.ok) {
-                    const data = await engineerRes.json();
-                    if (data.resources && data.resources.length > 0) {
-                        const img = data.resources[0];
-                        document.getElementById('engineerImage').src = 
-                            `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload/q_auto,f_auto/${img.public_id}.${img.format}`;
-                    }
+                if (creatorDoc.exists) {
+                    document.getElementById('creatorImage').src = creatorDoc.data().url;
                 }
-            } catch (e) { console.log('Engineer image not found'); }
+                if (engineerDoc.exists) {
+                    document.getElementById('engineerImage').src = engineerDoc.data().url;
+                }
+            } catch (e) { console.log('Could not load about photos:', e.message); }
         }
 
         // Load images on page load
         document.addEventListener('DOMContentLoaded', loadAboutImages);
+    </script>
 
-            </script>
-    
     <!-- Global JavaScript -->
     <script src="main.js" defer></script>
 </body>

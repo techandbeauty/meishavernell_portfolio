@@ -55,7 +55,7 @@
         <!-- Video Player (hidden until Enter is clicked) -->
         <div class="intro-video-container" id="introVideoContainer">
             <video class="intro-video" id="introVideo" playsinline>
-                <!-- Video source will be set dynamically from Cloudinary -->
+                <!-- Video source will be set dynamically from Firebase -->
             </video>
             <button class="skip-btn" id="skipBtn">SKIP</button>
         </div>
@@ -79,7 +79,7 @@
         <!-- Horizontal Scrolling Gallery -->
         <div class="gallery-container" id="galleryContainer">
             <div class="gallery-track" id="galleryTrack">
-                <!-- Gallery slides will be loaded dynamically from Cloudinary -->
+                <!-- Gallery slides will be loaded dynamically from Firebase -->
                 <div class="gallery-loading">Loading...</div>
             </div>
             <div class="gallery-overlay"></div>
@@ -197,37 +197,23 @@
 
     <script>
         // ============================================
-        // CLOUDINARY CONFIGURATION
+        // HERO SLIDESHOW + INTRO VIDEO CONFIGURATION
         // ============================================
         /* =====================================================
-           CLOUDINARY SETUP - FOLLOW THESE STEPS:
-           
-           1. Your Cloud Name is: didqb05ko (already set below!)
-           
-           2. Enable Resource List access in Cloudinary:
-              - Go to Settings → Security
-              - Under "Restricted image types" → UNCHECK "Resource list"
-              - Click Save
-           
-           3. Tag your images/videos:
-              - In Media Library, select all images you want on your site
-              - Click "Manage Tags" or right-click → "Edit Tag"
-              - Add the tag: mv-gallery (or whatever you set below)
-           
-           4. For VIDEOS, you need to tag them separately and they'll
-              be fetched from a different URL (handled automatically below)
-           
-           5. INTRO VIDEO: Upload your intro video and tag it: mv-intro
-              - This video will play when visitors click "ENTER"
-              - After it finishes, the main site appears
-           
-           That's it! Your website will show all media with that tag.
-           To update: just add/remove the tag from images in Cloudinary.
+           Hero slideshow images/videos and the intro video are managed
+           from the admin dashboard (admin-dashboard.html -> Site Photos
+           tab). No manual tagging needed here anymore:
+
+           - Hero slideshow: choose destination "Hero Slideshow" when
+             uploading. Each upload adds one slide, in upload order.
+           - Intro video: choose destination "Intro Video" when
+             uploading (video files only). Only the most recent upload
+             is used.
+
+           If nothing has been uploaded yet, the fallback images below
+           are shown instead.
            ===================================================== */
-        
-        const CLOUDINARY_CLOUD_NAME = 'didqb05ko'; // <-- Your cloud name (already set!)
-        const CLOUDINARY_TAG = 'mv-gallery'; // <-- Tag name for your gallery images
-        const CLOUDINARY_INTRO_TAG = 'mv-intro'; // <-- Tag for your intro video
+
         const MAX_GALLERY_ITEMS = 10; // <-- Maximum items to show in gallery
 
         /* =====================================================
@@ -243,7 +229,7 @@
         //     'YOUR_YOUTUBE_VIDEO_ID_2',
         // ];
         
-        // Fallback images (used if Cloudinary isn't set up yet)
+        // Fallback images (used if no hero slides have been uploaded yet)
         const FALLBACK_MEDIA = [
             { type: 'image', url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=1920&q=80' },
             { type: 'image', url: 'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=1920&q=80' },
@@ -254,60 +240,28 @@
         ];
 
         // ============================================
-        // LOAD GALLERY FROM CLOUDINARY (Using Tags)
+        // LOAD HERO SLIDESHOW FROM FIREBASE
         // ============================================
-        async function loadGalleryFromCloudinary() {
+        async function loadHeroSlides() {
             let mediaList = [];
-            
+
             try {
-                // Fetch IMAGES with the specified tag
-                const imageResponse = await fetch(
-                    `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/list/${CLOUDINARY_TAG}.json?_=${Date.now()}`
-                );
-                
-                if (imageResponse.ok) {
-                    const imageData = await imageResponse.json();
-                    if (imageData.resources && imageData.resources.length > 0) {
-                        const images = imageData.resources.map(resource => ({
-                            type: 'image',
-                            // Smart crop with face detection for best display
-                            url: `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload/c_fill,g_auto,w_1920,h_1080,q_auto,f_auto/${resource.public_id}.${resource.format}`
-                        }));
-                        mediaList = mediaList.concat(images);
-                    }
-                }
+                const db = firebase.firestore();
+                const snapshot = await db.collection('heroSlides').orderBy('order', 'asc').get();
 
-                // Fetch VIDEOS with the specified tag
-                const videoResponse = await fetch(
-                    `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/video/list/${CLOUDINARY_TAG}.json?_=${Date.now()}`
-                );
-                
-                if (videoResponse.ok) {
-                    const videoData = await videoResponse.json();
-                    if (videoData.resources && videoData.resources.length > 0) {
-                        const videos = videoData.resources.map(resource => ({
-                            type: 'video',
-                            // Videos optimized for display
-                            url: `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/video/upload/c_fill,w_1920,h_1080,q_auto/${resource.public_id}.${resource.format}`
-                        }));
-                        mediaList = mediaList.concat(videos);
-                    }
-                }
-
-                // If we got media from Cloudinary, use it
-                if (mediaList.length > 0) {
-                    console.log(`Loaded ${mediaList.length} items from Cloudinary`);
+                if (!snapshot.empty) {
+                    mediaList = snapshot.docs.map(doc => {
+                        const data = doc.data();
+                        return { type: data.type, url: data.url };
+                    });
+                    console.log(`Loaded ${mediaList.length} hero slides from Firebase`);
                 } else {
-                    console.log('No media found with tag. Using fallback images.');
-                    console.log('Make sure you:');
-                    console.log('1. Tagged your images with: ' + CLOUDINARY_TAG);
-                    console.log('2. Unchecked "Resource list" in Settings → Security');
+                    console.log('No hero slides uploaded yet. Using fallback images.');
                     mediaList = FALLBACK_MEDIA;
                 }
             } catch (error) {
-                console.log('Error loading from Cloudinary:', error.message);
+                console.log('Error loading hero slides:', error.message);
                 console.log('Using fallback images.');
-                console.log('Make sure you unchecked "Resource list" in Cloudinary Settings → Security');
                 mediaList = FALLBACK_MEDIA;
             }
 
@@ -380,51 +334,29 @@
         let introPosterUrl = null;
 
         async function loadIntroVideo() {
-            console.log('Loading intro video from Cloudinary tag:', CLOUDINARY_INTRO_TAG);
-            
+            console.log('Loading intro video from Firebase');
+
             try {
-                // Fetch intro video from Cloudinary
-                const response = await fetch(
-                    `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/video/list/${CLOUDINARY_INTRO_TAG}.json?_=${Date.now()}`
-                );
+                const db = firebase.firestore();
+                const doc = await db.collection('siteMedia').doc('intro-video').get();
 
-                console.log('Cloudinary response status:', response.status);
+                if (doc.exists) {
+                    const data = doc.data();
+                    introVideoUrl = data.url;
 
-                if (response.ok) {
-                    const data = await response.json();
-                    console.log('Cloudinary data:', data);
-                    
-                    if (data.resources && data.resources.length > 0) {
-                        const video = data.resources[0]; // Use first video with this tag
-                        console.log('Found video:', video.public_id, video.format);
-                        
-                        introVideoUrl = `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/video/upload/q_auto/${video.public_id}.${video.format}`;
-                        // Generate poster/thumbnail from video
-                        introPosterUrl = `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/video/upload/c_fill,g_auto,w_1920,h_1080,q_auto,f_auto,so_0/${video.public_id}.jpg`;
-                        
-                        // Set poster background
-                        document.getElementById('introPoster').style.backgroundImage = `url(${introPosterUrl})`;
-                        
-                        // Set video source
-                        const introVideo = document.getElementById('introVideo');
-                        introVideo.src = introVideoUrl;
-                        
-                        // Preload video
-                        introVideo.load();
-                        
-                        console.log('Intro video URL:', introVideoUrl);
-                        console.log('Intro poster URL:', introPosterUrl);
-                    } else {
-                        console.log('No videos found with tag:', CLOUDINARY_INTRO_TAG);
-                        console.log('Make sure you tagged your intro video with exactly: mv-intro');
-                    }
+                    // Set video source
+                    const introVideo = document.getElementById('introVideo');
+                    introVideo.src = introVideoUrl;
+
+                    // Preload video
+                    introVideo.load();
+
+                    console.log('Intro video URL:', introVideoUrl);
                 } else {
-                    console.log('Cloudinary API error. Status:', response.status);
-                    console.log('Make sure "Resource list" is UNCHECKED in Cloudinary Settings → Security');
+                    console.log('No intro video uploaded yet.');
                 }
             } catch (error) {
                 console.log('Could not load intro video:', error.message);
-                console.log('Check browser console for CORS errors');
             }
         }
 
@@ -434,7 +366,7 @@
             await loadIntroVideo();
             
             // Also start loading the main gallery
-            loadGalleryFromCloudinary();
+            loadHeroSlides();
         });
 
         // Enter button click handler

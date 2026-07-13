@@ -32,6 +32,26 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Named single-photo slots (about-creator, about-engineer,
+    // apps-praxis, apps-marc, apps-asvab, intro-video) - public site
+    // content, only admin can replace them.
+    match /siteMedia/{slotId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Homepage hero slideshow - ordered list, public content.
+    match /heroSlides/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Portfolio photos/videos, optionally matched to a project.
+    match /portfolioMedia/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     match /contacts/{docId} {
       // Public can submit/update their own signup by hitting the
       // email-keyed doc ID. No read/list, so nobody can enumerate emails.
