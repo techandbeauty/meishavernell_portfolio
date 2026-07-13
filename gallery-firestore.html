@@ -46,25 +46,45 @@
     <!-- Header -->
     <header class="gallery-header">
         <h1 class="gallery-title">THE LOOKBOOK</h1>
-        <p class="gallery-subtitle">My Journey Into The Air re</p>
+        <p class="gallery-subtitle"> Moving Forward: Life Behind the Code </p>
     </header>
 
-    <!-- Filter Tabs -->
+    <!-- Filter Tabs - a documentary arc told through photos & videos -->
     <div class="filter-section">
         <div class="filter-tabs">
-            <button class="filter-tab active" data-filter="all">All</button>
-            <button class="filter-tab" data-filter="training">Training</button>
-            <button class="filter-tab" data-filter="moments">Moments</button>
-            <button class="filter-tab" data-filter="milestones">Milestones</button>
-            <button class="filter-tab" data-filter="lifestyle">Lifestyle</button>
+            <button class="filter-tab active" data-filter="all">
+                <span class="filter-tab-title">Mei</span>
+                <span class="filter-tab-subtitle">Who I am</span>
+            </button>
+            <button class="filter-tab" data-filter="lifestyle">
+                <span class="filter-tab-title">Lifestyle</span>
+                <span class="filter-tab-subtitle">How I live</span>
+            </button>
+            <button class="filter-tab" data-filter="repository">
+                <span class="filter-tab-title">Repository</span>
+                <span class="filter-tab-subtitle">What I build</span>
+            </button>
+            <button class="filter-tab" data-filter="service">
+                <span class="filter-tab-title">Service</span>
+                <span class="filter-tab-subtitle">What I stand for</span>
+            </button>
+            <button class="filter-tab" data-filter="milestones">
+                <span class="filter-tab-title">Milestones</span>
+                <span class="filter-tab-subtitle">How far I've come</span>
+            </button>
         </div>
     </div>
 
-    <!-- Gallery Grid -->
+    <!-- Gallery Carousel -->
     <section class="gallery-section">
-        <div class="gallery-grid" id="galleryGrid">
-            <div class="loading">Loading gallery...</div>
+        <div class="carousel-wrap">
+            <button class="carousel-arrow carousel-arrow-prev" id="carouselPrev" aria-label="Previous photo">‹</button>
+            <div class="gallery-grid" id="galleryGrid">
+                <div class="loading">Loading gallery...</div>
+            </div>
+            <button class="carousel-arrow carousel-arrow-next" id="carouselNext" aria-label="Next photo">›</button>
         </div>
+        <div class="carousel-counter" id="carouselCounter"></div>
     </section>
 
     <!-- Image Modal -->
@@ -149,8 +169,8 @@
 
             grid.innerHTML = filtered.map((photo, index) => `
                 <div class="gallery-item" data-index="${index}" data-filter="${photo.category}">
-                    <img 
-                        src="${photo.url}" 
+                    <img
+                        src="${photo.url}"
                         alt="${photo.caption}"
                         loading="lazy"
                         class="gallery-image"
@@ -168,6 +188,78 @@
                     openModal(filtered[index]);
                 });
             });
+
+            initCarousel(filtered.length);
+        }
+
+        // ============================================
+        // CAROUSEL (swipe/scroll navigation)
+        // ============================================
+        const carouselPrev = document.getElementById('carouselPrev');
+        const carouselNext = document.getElementById('carouselNext');
+        const carouselCounter = document.getElementById('carouselCounter');
+
+        function initCarousel(count) {
+            if (count === 0) {
+                carouselCounter.textContent = '';
+                return;
+            }
+
+            updateCounter();
+
+            document.getElementById('galleryGrid').onscroll = debounceScroll(updateCounter, 100);
+
+            carouselPrev.onclick = () => scrollByOne(-1);
+            carouselNext.onclick = () => scrollByOne(1);
+        }
+
+        function currentIndex() {
+            const grid = document.getElementById('galleryGrid');
+            const items = [...grid.querySelectorAll('.gallery-item')];
+            if (items.length === 0) return 0;
+            const center = grid.scrollLeft + grid.clientWidth / 2;
+            let closest = 0;
+            let closestDist = Infinity;
+            items.forEach((item, i) => {
+                const itemCenter = item.offsetLeft + item.offsetWidth / 2;
+                const dist = Math.abs(itemCenter - center);
+                if (dist < closestDist) {
+                    closestDist = dist;
+                    closest = i;
+                }
+            });
+            return closest;
+        }
+
+        function updateCounter() {
+            const grid = document.getElementById('galleryGrid');
+            const items = grid.querySelectorAll('.gallery-item');
+            if (items.length === 0) {
+                carouselCounter.textContent = '';
+                return;
+            }
+            carouselCounter.textContent = `${currentIndex() + 1} / ${items.length}`;
+        }
+
+        function scrollByOne(direction) {
+            const grid = document.getElementById('galleryGrid');
+            const items = [...grid.querySelectorAll('.gallery-item')];
+            const target = Math.min(items.length - 1, Math.max(0, currentIndex() + direction));
+            const item = items[target];
+            if (item) {
+                grid.scrollTo({
+                    left: item.offsetLeft - (grid.clientWidth - item.offsetWidth) / 2,
+                    behavior: 'smooth'
+                });
+            }
+        }
+
+        function debounceScroll(fn, wait) {
+            let t;
+            return () => {
+                clearTimeout(t);
+                t = setTimeout(fn, wait);
+            };
         }
 
         // ============================================

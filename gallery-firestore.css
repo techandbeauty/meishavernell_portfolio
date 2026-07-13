@@ -51,22 +51,48 @@
 }
 
 .filter-tab {
-    padding: 10px 25px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 12px 22px;
     background: transparent;
     border: 1px solid var(--mid-gray);
-    color: var(--light-gray);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.filter-tab-title {
     font-family: 'Montserrat', sans-serif;
     font-size: 0.65rem;
     letter-spacing: 0.15rem;
     text-transform: uppercase;
-    cursor: pointer;
-    transition: all 0.3s ease;
+    color: var(--light-gray);
+    transition: color 0.3s ease;
+}
+
+.filter-tab-subtitle {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 0.7rem;
+    letter-spacing: 0.02rem;
+    color: var(--mid-gray);
+    transition: color 0.3s ease;
 }
 
 .filter-tab:hover,
 .filter-tab.active {
     border-color: var(--gold);
+}
+
+.filter-tab:hover .filter-tab-title,
+.filter-tab.active .filter-tab-title {
     color: var(--gold);
+}
+
+.filter-tab:hover .filter-tab-subtitle,
+.filter-tab.active .filter-tab-subtitle {
+    color: var(--light-gray);
 }
 
 /* Gallery Section */
@@ -76,12 +102,28 @@
     margin: 0 auto;
 }
 
-/* Gallery Grid - Instagram/Vogue Style */
+/* Carousel wrapper - holds the arrows either side of the scroller */
+.carousel-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+/* Gallery Carousel - Vogue Lookbook Style: swipe/scroll through
+   full-bleed portrait cards, one (or a peek of the next) at a time */
 .gallery-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 20px;
-    grid-auto-rows: 300px;
+    display: flex;
+    gap: 24px;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding: 10px 0;
+    scroll-padding-left: 50%;
+}
+
+.gallery-grid::-webkit-scrollbar {
+    display: none;
 }
 
 .gallery-item {
@@ -90,12 +132,15 @@
     cursor: pointer;
     background: var(--dark-gray);
     border: 1px solid var(--mid-gray);
-    transition: all 0.3s ease;
+    transition: border-color 0.3s ease;
+    flex: 0 0 auto;
+    scroll-snap-align: center;
+    width: min(420px, 72vw);
+    aspect-ratio: 3 / 4;
 }
 
 .gallery-item:hover {
     border-color: var(--gold);
-    transform: scale(1.02);
 }
 
 .gallery-image {
@@ -110,26 +155,60 @@
     filter: brightness(0.7);
 }
 
-/* Gallery Overlay */
+/* Prev/Next arrows */
+.carousel-arrow {
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(10, 10, 10, 0.7);
+    border: 1px solid var(--mid-gray);
+    color: var(--white);
+    font-size: 1.4rem;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 5;
+    transition: all 0.3s ease;
+}
+
+.carousel-arrow:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+}
+
+.carousel-arrow-prev {
+    margin-right: -22px;
+}
+
+.carousel-arrow-next {
+    margin-left: -22px;
+}
+
+.carousel-counter {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 0.7rem;
+    letter-spacing: 0.15rem;
+    color: var(--light-gray);
+}
+
+/* Gallery Overlay - caption sits in a gradient at the bottom of each
+   card, always visible (works the same on touch swipe and mouse hover) */
 .gallery-overlay {
     position: absolute;
-    top: 0;
+    bottom: 0;
     left: 0;
     width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.7);
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.85) 0%, rgba(0, 0, 0, 0.4) 60%, transparent 100%);
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    opacity: 0;
-    transition: opacity 0.3s ease;
+    justify-content: flex-end;
     text-align: center;
-    padding: 20px;
-}
-
-.gallery-item:hover .gallery-overlay {
-    opacity: 1;
+    padding: 40px 20px 20px;
 }
 
 .gallery-caption {
@@ -226,7 +305,7 @@
 
 /* Empty State */
 .empty-state {
-    grid-column: 1 / -1;
+    width: 100%;
     padding: 60px 20px;
     text-align: center;
     color: var(--light-gray);
@@ -238,7 +317,7 @@
 }
 
 .loading {
-    grid-column: 1 / -1;
+    width: 100%;
     text-align: center;
     padding: 60px 20px;
     color: var(--light-gray);
@@ -246,10 +325,8 @@
 
 /* Responsive */
 @media (max-width: 1024px) {
-    .gallery-grid {
-        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-        grid-auto-rows: 250px;
-        gap: 15px;
+    .gallery-item {
+        width: min(360px, 75vw);
     }
 }
 
@@ -271,10 +348,16 @@
         padding: 30px 15px;
     }
 
+    .gallery-item {
+        width: 82vw;
+    }
+
     .gallery-grid {
-        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-        grid-auto-rows: 200px;
-        gap: 12px;
+        gap: 16px;
+    }
+
+    .carousel-arrow {
+        display: none;
     }
 
     .filter-tabs {
@@ -283,8 +366,15 @@
     }
 
     .filter-tab {
-        padding: 8px 15px;
-        font-size: 0.6rem;
+        padding: 8px 14px;
+    }
+
+    .filter-tab-title {
+        font-size: 0.58rem;
+    }
+
+    .filter-tab-subtitle {
+        font-size: 0.62rem;
     }
 }
 
@@ -293,10 +383,8 @@
         font-size: 2rem;
     }
 
-    .gallery-grid {
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-        grid-auto-rows: 150px;
-        gap: 10px;
+    .gallery-item {
+        width: 88vw;
     }
 
     .modal-image-container {
