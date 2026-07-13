@@ -3,36 +3,92 @@ rules_version = '2';
 // Firestore Security Rules for meishavernell-site
 // Paste this into: Firebase Console -> Firestore Database -> Rules
 //
-// Model:
-//  - gallery / asvab: public can READ (the site displays these), only a
-//    signed-in admin (logged in via admin-dashboard.html) can WRITE.
-//  - contacts: public can CREATE (lead-capture forms on asvab-firestore.html)
-//    but can never READ, UPDATE, or DELETE - so nobody can pull the list of
-//    emails/names or overwrite someone else's entry. Only the signed-in
-//    admin can read/manage this list (e.g. from the Firebase console or a
-//    future admin view).
+// >>> REPLACE THIS with the email you log into admin-dashboard.html with <<<
+// This is the ONLY account allowed to create/edit/delete gallery photos,
+// ASVAB materials, practice tests, flashcards, study notes, and live
+// sessions. Everyone else who signs in (portal members) can only read.
+//
+//   const ADMIN_EMAIL = "youradminemail@example.com";
+//
+// Firestore rules can't use a JS-style constant, so the email is repeated
+// inline in isAdmin() below - just find/replace it there.
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    function isAdmin() {
+      return request.auth != null &&
+             request.auth.token.email == "youradminemail@example.com";
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // ---------- Public site content (existing) ----------
+
     match /gallery/{docId} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if isAdmin();
     }
 
     match /asvab/{docId} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if isAdmin();
     }
 
     match /contacts/{docId} {
-      // Public can submit a new signup (create) or update their own record
-      // by hitting the same email-based doc ID (used by the upsert pattern
-      // in asvab-firestore.html). No read/list, so nobody can enumerate
-      // or scrape the collection.
+      // Public can submit/update their own signup by hitting the
+      // email-keyed doc ID. No read/list, so nobody can enumerate emails.
       allow create, update: if request.resource.data.email is string
                               && request.resource.data.email == docId;
-      allow read, delete: if request.auth != null;
+      allow read, delete: if isAdmin();
+    }
+
+    // ---------- Member portal ----------
+
+    match /members/{uid} {
+      // A member can read/write only their own profile. Admin can read all.
+      allow read, write: if isSignedIn() && request.auth.uid == uid;
+      allow read: if isAdmin();
+    }
+
+    match /practiceTests/{docId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    match /flashcards/{docId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    match /studyNotes/{docId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    match /liveSessions/{docId} {
+      allow read: if isSignedIn();
+      // Admin can fully manage a session. A signed-in member may ONLY
+      // increment spotsTaken by exactly 1 (reserving a spot) - nothing else.
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() ||
+        (isSignedIn() &&
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['spotsTaken']) &&
+         request.resource.data.spotsTaken == resource.data.spotsTaken + 1);
+    }
+
+    // Doc ID convention: `${sessionId}_${uid}` so a member can only ever
+    // create/read their own reservation, with no query/read needed to
+    // check for duplicates.
+    match /sessionReservations/{docId} {
+      allow create: if isSignedIn()
+                     && request.resource.data.uid == request.auth.uid
+                     && docId == request.resource.data.sessionId + '_' + request.auth.uid;
+      allow read: if isAdmin() ||
+        (isSignedIn() && resource.data.uid == request.auth.uid);
+      allow update, delete: if isAdmin();
     }
 
     // Deny everything else by default.

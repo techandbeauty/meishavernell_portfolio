@@ -539,6 +539,10 @@
         <div class="dashboard-tabs">
             <button class="tab-btn active" data-tab="gallery">Gallery</button>
             <button class="tab-btn" data-tab="asvab">ASVAB Content</button>
+            <button class="tab-btn" data-tab="practice">Practice Tests</button>
+            <button class="tab-btn" data-tab="flashcards">Flashcards</button>
+            <button class="tab-btn" data-tab="notes">Study Notes</button>
+            <button class="tab-btn" data-tab="sessions">Live Sessions</button>
         </div>
 
         <!-- Gallery Tab -->
@@ -657,6 +661,221 @@
                 <div id="asvabItems"></div>
             </div>
         </div>
+
+        <!-- Practice Tests Tab -->
+        <div class="tab-content" id="practice-tab">
+            <div class="content-section">
+                <h2 class="section-title">Add Practice Question</h2>
+                <form class="upload-form" id="practiceUploadForm">
+                    <div class="status-message" id="practiceStatus"></div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="practiceSubject">Subject / Category</label>
+                            <input type="text" id="practiceSubject" placeholder="e.g., Arithmetic Reasoning" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row full">
+                        <div class="form-group">
+                            <label for="practiceQuestion">Question</label>
+                            <textarea id="practiceQuestion" placeholder="Type the question here..." required></textarea>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="practiceChoice0">Choice A</label>
+                            <input type="text" id="practiceChoice0" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="practiceChoice1">Choice B</label>
+                            <input type="text" id="practiceChoice1" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="practiceChoice2">Choice C</label>
+                            <input type="text" id="practiceChoice2" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="practiceChoice3">Choice D</label>
+                            <input type="text" id="practiceChoice3" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="practiceCorrect">Correct Answer</label>
+                            <select id="practiceCorrect" required>
+                                <option value="0">Choice A</option>
+                                <option value="1">Choice B</option>
+                                <option value="2">Choice C</option>
+                                <option value="3">Choice D</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row full">
+                        <div class="form-group">
+                            <label for="practiceExplanation">Explanation (Optional)</label>
+                            <textarea id="practiceExplanation" placeholder="Explain why the correct answer is right..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="btn-group">
+                        <button type="submit" class="btn" id="practiceUploadBtn">SAVE QUESTION</button>
+                        <button type="reset" class="btn secondary">CLEAR</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="content-section">
+                <h2 class="section-title">Practice Questions</h2>
+                <div class="loading" id="practiceLoading">Loading questions...</div>
+                <div id="practiceItems"></div>
+            </div>
+        </div>
+
+        <!-- Flashcards Tab -->
+        <div class="tab-content" id="flashcards-tab">
+            <div class="content-section">
+                <h2 class="section-title">Add Flashcard</h2>
+                <form class="upload-form" id="flashcardUploadForm">
+                    <div class="status-message" id="flashcardStatus"></div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="flashcardSubject">Subject / Category</label>
+                            <input type="text" id="flashcardSubject" placeholder="e.g., Word Knowledge" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row full">
+                        <div class="form-group">
+                            <label for="flashcardFront">Front</label>
+                            <textarea id="flashcardFront" placeholder="What shows on the front of the card..." required></textarea>
+                        </div>
+                    </div>
+
+                    <div class="form-row full">
+                        <div class="form-group">
+                            <label for="flashcardBack">Back</label>
+                            <textarea id="flashcardBack" placeholder="What shows when it's flipped..." required></textarea>
+                        </div>
+                    </div>
+
+                    <div class="btn-group">
+                        <button type="submit" class="btn" id="flashcardUploadBtn">SAVE FLASHCARD</button>
+                        <button type="reset" class="btn secondary">CLEAR</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="content-section">
+                <h2 class="section-title">Flashcards</h2>
+                <div class="loading" id="flashcardLoading">Loading flashcards...</div>
+                <div id="flashcardItems"></div>
+            </div>
+        </div>
+
+        <!-- Study Notes Tab -->
+        <div class="tab-content" id="notes-tab">
+            <div class="content-section">
+                <h2 class="section-title">Add Study Note</h2>
+                <form class="upload-form" id="noteUploadForm">
+                    <div class="status-message" id="noteStatus"></div>
+
+                    <div class="form-row full">
+                        <div class="form-group">
+                            <label for="noteTitle">Title</label>
+                            <input type="text" id="noteTitle" placeholder="e.g., Study Tips for Test Day" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="noteSubject">Subject / Category</label>
+                            <input type="text" id="noteSubject" placeholder="e.g., General">
+                        </div>
+                        <div class="form-group">
+                            <label>Attachment (Optional)</label>
+                            <div class="file-input-wrapper">
+                                <label class="file-input-label" for="noteFile">
+                                    <div>📄 Click to upload</div>
+                                    <div class="file-name" id="noteFileName"></div>
+                                </label>
+                                <input type="file" id="noteFile" accept=".pdf,.doc,.docx">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-row full">
+                        <div class="form-group">
+                            <label for="noteContent">Content</label>
+                            <textarea id="noteContent" placeholder="Write the note here..." required></textarea>
+                        </div>
+                    </div>
+
+                    <div class="btn-group">
+                        <button type="submit" class="btn" id="noteUploadBtn">SAVE NOTE</button>
+                        <button type="reset" class="btn secondary">CLEAR</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="content-section">
+                <h2 class="section-title">Study Notes</h2>
+                <div class="loading" id="noteLoading">Loading notes...</div>
+                <div id="noteItems"></div>
+            </div>
+        </div>
+
+        <!-- Live Sessions Tab -->
+        <div class="tab-content" id="sessions-tab">
+            <div class="content-section">
+                <h2 class="section-title">Add Live Session</h2>
+                <form class="upload-form" id="sessionUploadForm">
+                    <div class="status-message" id="sessionStatus"></div>
+
+                    <div class="form-row full">
+                        <div class="form-group">
+                            <label for="sessionTitle">Session Title</label>
+                            <input type="text" id="sessionTitle" placeholder="e.g., Live ASVAB Q&A" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="sessionDateTime">Date & Time</label>
+                            <input type="datetime-local" id="sessionDateTime" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="sessionSpots">Total Spots</label>
+                            <input type="number" id="sessionSpots" min="1" value="10" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row full">
+                        <div class="form-group">
+                            <label for="sessionDescription">Description</label>
+                            <textarea id="sessionDescription" placeholder="What this session covers..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="btn-group">
+                        <button type="submit" class="btn" id="sessionUploadBtn">SAVE SESSION</button>
+                        <button type="reset" class="btn secondary">CLEAR</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="content-section">
+                <h2 class="section-title">Upcoming Sessions</h2>
+                <div class="loading" id="sessionLoading">Loading sessions...</div>
+                <div id="sessionItems"></div>
+            </div>
+        </div>
     </div>
 
     <!-- Firebase Config & JS -->
@@ -690,6 +909,10 @@
             dashboardContainer.style.display = 'block';
             loadGalleryPhotos();
             loadASVABMaterials();
+            loadPracticeQuestions();
+            loadFlashcards();
+            loadNotes();
+            loadSessions();
         }
 
         loginForm.addEventListener('submit', async (e) => {
@@ -942,6 +1165,309 @@
                 showStatus('asvabStatus', '✓ Material deleted', 'success');
             } catch (error) {
                 showStatus('asvabStatus', `Error: ${error.message}`, 'error');
+            }
+        }
+
+        // ============================================
+        // PRACTICE TESTS
+        // ============================================
+        document.getElementById('practiceUploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const uploadBtn = document.getElementById('practiceUploadBtn');
+            uploadBtn.disabled = true;
+            uploadBtn.textContent = 'SAVING...';
+
+            try {
+                await firebase.firestore().collection('practiceTests').add({
+                    subject: document.getElementById('practiceSubject').value,
+                    question: document.getElementById('practiceQuestion').value,
+                    choices: [
+                        document.getElementById('practiceChoice0').value,
+                        document.getElementById('practiceChoice1').value,
+                        document.getElementById('practiceChoice2').value,
+                        document.getElementById('practiceChoice3').value,
+                    ],
+                    correctIndex: parseInt(document.getElementById('practiceCorrect').value, 10),
+                    explanation: document.getElementById('practiceExplanation').value,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                showStatus('practiceStatus', '✓ Question saved!', 'success');
+                document.getElementById('practiceUploadForm').reset();
+                loadPracticeQuestions();
+            } catch (error) {
+                showStatus('practiceStatus', `Error: ${error.message}`, 'error');
+            }
+
+            uploadBtn.disabled = false;
+            uploadBtn.textContent = 'SAVE QUESTION';
+        });
+
+        async function loadPracticeQuestions() {
+            const container = document.getElementById('practiceItems');
+            const loading = document.getElementById('practiceLoading');
+
+            try {
+                const snapshot = await firebase.firestore().collection('practiceTests').orderBy('createdAt', 'desc').get();
+                loading.style.display = 'none';
+
+                if (snapshot.empty) {
+                    container.innerHTML = '<p style="text-align: center; color: var(--light-gray);">No practice questions yet.</p>';
+                    return;
+                }
+
+                container.innerHTML = snapshot.docs.map(doc => {
+                    const data = doc.data();
+                    return `
+                        <div style="background: var(--dark-gray); border: 1px solid var(--mid-gray); padding: 20px; margin-bottom: 20px;">
+                            <p style="font-size: 0.8rem; color: var(--gold); margin-bottom: 8px; text-transform: uppercase;">${data.subject}</p>
+                            <h3 style="color: var(--white); margin-bottom: 10px;">${data.question}</h3>
+                            <p style="color: var(--light-gray); font-size: 0.85rem; margin-bottom: 15px;">Correct: ${(data.choices || [])[data.correctIndex] || ''}</p>
+                            <button onclick="deletePracticeQuestion('${doc.id}')" style="background: transparent; border: 1px solid var(--mid-gray); color: #fca5a5; padding: 8px 15px; cursor: pointer; font-size: 0.8rem;">DELETE</button>
+                        </div>
+                    `;
+                }).join('');
+            } catch (error) {
+                loading.innerHTML = `<p style="color: #fca5a5;">Error loading questions: ${error.message}</p>`;
+            }
+        }
+
+        async function deletePracticeQuestion(docId) {
+            if (!confirm('Delete this question?')) return;
+            try {
+                await firebase.firestore().collection('practiceTests').doc(docId).delete();
+                loadPracticeQuestions();
+                showStatus('practiceStatus', '✓ Question deleted', 'success');
+            } catch (error) {
+                showStatus('practiceStatus', `Error: ${error.message}`, 'error');
+            }
+        }
+
+        // ============================================
+        // FLASHCARDS
+        // ============================================
+        document.getElementById('flashcardUploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const uploadBtn = document.getElementById('flashcardUploadBtn');
+            uploadBtn.disabled = true;
+            uploadBtn.textContent = 'SAVING...';
+
+            try {
+                await firebase.firestore().collection('flashcards').add({
+                    subject: document.getElementById('flashcardSubject').value,
+                    front: document.getElementById('flashcardFront').value,
+                    back: document.getElementById('flashcardBack').value,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                showStatus('flashcardStatus', '✓ Flashcard saved!', 'success');
+                document.getElementById('flashcardUploadForm').reset();
+                loadFlashcards();
+            } catch (error) {
+                showStatus('flashcardStatus', `Error: ${error.message}`, 'error');
+            }
+
+            uploadBtn.disabled = false;
+            uploadBtn.textContent = 'SAVE FLASHCARD';
+        });
+
+        async function loadFlashcards() {
+            const container = document.getElementById('flashcardItems');
+            const loading = document.getElementById('flashcardLoading');
+
+            try {
+                const snapshot = await firebase.firestore().collection('flashcards').orderBy('createdAt', 'desc').get();
+                loading.style.display = 'none';
+
+                if (snapshot.empty) {
+                    container.innerHTML = '<p style="text-align: center; color: var(--light-gray);">No flashcards yet.</p>';
+                    return;
+                }
+
+                container.innerHTML = snapshot.docs.map(doc => {
+                    const data = doc.data();
+                    return `
+                        <div style="background: var(--dark-gray); border: 1px solid var(--mid-gray); padding: 20px; margin-bottom: 20px;">
+                            <p style="font-size: 0.8rem; color: var(--gold); margin-bottom: 8px; text-transform: uppercase;">${data.subject}</p>
+                            <p style="color: var(--white); margin-bottom: 8px;"><strong>Front:</strong> ${data.front}</p>
+                            <p style="color: var(--light-gray); margin-bottom: 15px;"><strong>Back:</strong> ${data.back}</p>
+                            <button onclick="deleteFlashcard('${doc.id}')" style="background: transparent; border: 1px solid var(--mid-gray); color: #fca5a5; padding: 8px 15px; cursor: pointer; font-size: 0.8rem;">DELETE</button>
+                        </div>
+                    `;
+                }).join('');
+            } catch (error) {
+                loading.innerHTML = `<p style="color: #fca5a5;">Error loading flashcards: ${error.message}</p>`;
+            }
+        }
+
+        async function deleteFlashcard(docId) {
+            if (!confirm('Delete this flashcard?')) return;
+            try {
+                await firebase.firestore().collection('flashcards').doc(docId).delete();
+                loadFlashcards();
+                showStatus('flashcardStatus', '✓ Flashcard deleted', 'success');
+            } catch (error) {
+                showStatus('flashcardStatus', `Error: ${error.message}`, 'error');
+            }
+        }
+
+        // ============================================
+        // STUDY NOTES
+        // ============================================
+        const noteFile = document.getElementById('noteFile');
+        const noteFileName = document.getElementById('noteFileName');
+
+        noteFile.addEventListener('change', (e) => {
+            noteFileName.textContent = e.target.files[0]?.name || '';
+        });
+
+        document.getElementById('noteUploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const uploadBtn = document.getElementById('noteUploadBtn');
+            uploadBtn.disabled = true;
+            uploadBtn.textContent = 'SAVING...';
+
+            try {
+                let fileUrl = '';
+                const file = noteFile.files[0];
+                if (file) {
+                    const timestamp = Date.now();
+                    const storageRef = firebase.storage().ref(`studyNotes/${timestamp}-${file.name}`);
+                    const snapshot = await storageRef.put(file);
+                    fileUrl = await snapshot.ref.getDownloadURL();
+                }
+
+                await firebase.firestore().collection('studyNotes').add({
+                    title: document.getElementById('noteTitle').value,
+                    subject: document.getElementById('noteSubject').value,
+                    content: document.getElementById('noteContent').value,
+                    fileUrl: fileUrl,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                showStatus('noteStatus', '✓ Note saved!', 'success');
+                document.getElementById('noteUploadForm').reset();
+                noteFileName.textContent = '';
+                loadNotes();
+            } catch (error) {
+                showStatus('noteStatus', `Error: ${error.message}`, 'error');
+            }
+
+            uploadBtn.disabled = false;
+            uploadBtn.textContent = 'SAVE NOTE';
+        });
+
+        async function loadNotes() {
+            const container = document.getElementById('noteItems');
+            const loading = document.getElementById('noteLoading');
+
+            try {
+                const snapshot = await firebase.firestore().collection('studyNotes').orderBy('createdAt', 'desc').get();
+                loading.style.display = 'none';
+
+                if (snapshot.empty) {
+                    container.innerHTML = '<p style="text-align: center; color: var(--light-gray);">No study notes yet.</p>';
+                    return;
+                }
+
+                container.innerHTML = snapshot.docs.map(doc => {
+                    const data = doc.data();
+                    return `
+                        <div style="background: var(--dark-gray); border: 1px solid var(--mid-gray); padding: 20px; margin-bottom: 20px;">
+                            <h3 style="color: var(--white); margin-bottom: 8px;">${data.title}</h3>
+                            <p style="font-size: 0.8rem; color: var(--gold); margin-bottom: 12px; text-transform: uppercase;">${data.subject || 'General'}</p>
+                            <p style="color: var(--light-gray); margin-bottom: 15px; line-height: 1.6;">${(data.content || '').substring(0, 200)}...</p>
+                            ${data.fileUrl ? `<p style="font-size: 0.85rem; color: var(--gold); margin-bottom: 15px;"><a href="${data.fileUrl}" target="_blank" style="color: var(--gold);">📄 View File</a></p>` : ''}
+                            <button onclick="deleteNote('${doc.id}')" style="background: transparent; border: 1px solid var(--mid-gray); color: #fca5a5; padding: 8px 15px; cursor: pointer; font-size: 0.8rem;">DELETE</button>
+                        </div>
+                    `;
+                }).join('');
+            } catch (error) {
+                loading.innerHTML = `<p style="color: #fca5a5;">Error loading notes: ${error.message}</p>`;
+            }
+        }
+
+        async function deleteNote(docId) {
+            if (!confirm('Delete this note?')) return;
+            try {
+                await firebase.firestore().collection('studyNotes').doc(docId).delete();
+                loadNotes();
+                showStatus('noteStatus', '✓ Note deleted', 'success');
+            } catch (error) {
+                showStatus('noteStatus', `Error: ${error.message}`, 'error');
+            }
+        }
+
+        // ============================================
+        // LIVE SESSIONS
+        // ============================================
+        document.getElementById('sessionUploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const uploadBtn = document.getElementById('sessionUploadBtn');
+            uploadBtn.disabled = true;
+            uploadBtn.textContent = 'SAVING...';
+
+            try {
+                const dateTimeValue = document.getElementById('sessionDateTime').value;
+                await firebase.firestore().collection('liveSessions').add({
+                    title: document.getElementById('sessionTitle').value,
+                    dateTime: new Date(dateTimeValue).toISOString(),
+                    spotsTotal: parseInt(document.getElementById('sessionSpots').value, 10),
+                    spotsTaken: 0,
+                    description: document.getElementById('sessionDescription').value,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                showStatus('sessionStatus', '✓ Session saved!', 'success');
+                document.getElementById('sessionUploadForm').reset();
+                loadSessions();
+            } catch (error) {
+                showStatus('sessionStatus', `Error: ${error.message}`, 'error');
+            }
+
+            uploadBtn.disabled = false;
+            uploadBtn.textContent = 'SAVE SESSION';
+        });
+
+        async function loadSessions() {
+            const container = document.getElementById('sessionItems');
+            const loading = document.getElementById('sessionLoading');
+
+            try {
+                const snapshot = await firebase.firestore().collection('liveSessions').orderBy('dateTime', 'asc').get();
+                loading.style.display = 'none';
+
+                if (snapshot.empty) {
+                    container.innerHTML = '<p style="text-align: center; color: var(--light-gray);">No sessions yet.</p>';
+                    return;
+                }
+
+                container.innerHTML = snapshot.docs.map(doc => {
+                    const data = doc.data();
+                    const dt = data.dateTime ? new Date(data.dateTime).toLocaleString() : '';
+                    return `
+                        <div style="background: var(--dark-gray); border: 1px solid var(--mid-gray); padding: 20px; margin-bottom: 20px;">
+                            <h3 style="color: var(--white); margin-bottom: 8px;">${data.title}</h3>
+                            <p style="font-size: 0.8rem; color: var(--gold); margin-bottom: 8px;">${dt}</p>
+                            <p style="color: var(--light-gray); margin-bottom: 8px;">${data.spotsTaken || 0} / ${data.spotsTotal || 0} spots reserved</p>
+                            <p style="color: var(--light-gray); margin-bottom: 15px; line-height: 1.6;">${data.description || ''}</p>
+                            <button onclick="deleteSession('${doc.id}')" style="background: transparent; border: 1px solid var(--mid-gray); color: #fca5a5; padding: 8px 15px; cursor: pointer; font-size: 0.8rem;">DELETE</button>
+                        </div>
+                    `;
+                }).join('');
+            } catch (error) {
+                loading.innerHTML = `<p style="color: #fca5a5;">Error loading sessions: ${error.message}</p>`;
+            }
+        }
+
+        async function deleteSession(docId) {
+            if (!confirm('Delete this session? Any reservations for it will be orphaned.')) return;
+            try {
+                await firebase.firestore().collection('liveSessions').doc(docId).delete();
+                loadSessions();
+                showStatus('sessionStatus', '✓ Session deleted', 'success');
+            } catch (error) {
+                showStatus('sessionStatus', `Error: ${error.message}`, 'error');
             }
         }
 

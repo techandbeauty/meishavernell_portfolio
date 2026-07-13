@@ -7,10 +7,15 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=Bebas+Neue&family=Montserrat:wght@200;300;400;500;600&display=swap" rel="stylesheet">
-    
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore-compat.js"></script>
+
     <!-- Global Styles -->
     <link rel="stylesheet" href="main.css">
-    
+
     <!-- Page Styles -->
     <link rel="stylesheet" href="index.css">
 </head>
@@ -24,6 +29,7 @@
             <a href="index.html" class="nav-link nav-star" role="link" tabindex="0">★</a>
             <a href="asvab-firestore.html" class="nav-link" role="link" tabindex="0">ASVAB Prep</a>
             <a href="connect.html" class="nav-link" role="link" tabindex="0">Connect</a>
+            <a href="portal.html" class="nav-link" role="link" tabindex="0">Portal</a>
         </div>
 
         <div class="nav-toggle" id="navToggle">
@@ -141,77 +147,41 @@
             <button class="modal-close" id="closeModalBtn">✕</button>
             
             <h2 class="modal-title">Be a part of my village</h2>
-            <p class="modal-subtitle">See more of my life as a single mom, engineering student, learn about my latest tech collaborations, and so much more!</p>
+            <p class="modal-subtitle">Join for exclusive perks - ASVAB study resources, practice tests, flashcards, live 1-on-1 sessions, and more. See more of my life as a single mom, engineering student, and my latest tech collaborations too.</p>
 
             <!-- Success Message -->
             <div class="success-message" id="successMessage">
                 <div class="success-icon">✓</div>
-                <h3 class="success-title">Thank You!</h3>
-                <p class="success-text">Your inquiry has been received.<br>We'll be in touch soon.</p>
+                <h3 class="success-title">Check Your Email!</h3>
+                <p class="success-text">We sent a sign-in link to your inbox.<br>Click it to finish joining and land in your member portal.</p>
                 <button class="success-close-btn" id="successCloseBtn">CONTINUE</button>
             </div>
 
-            <!-- =====================================================
-                 NETLIFY FORMS INTEGRATION:
-                 This form automatically works when deployed to Netlify!
-                 
-                 All submissions will appear in:
-                 Netlify Dashboard → Your Site → Forms → "contact"
-                 
-                 You can also set up email notifications in Netlify:
-                 Site Settings → Forms → Form notifications → Add notification
-                 
-                 OPTIONAL: If you prefer Mailchimp, replace:
-                 - Remove: data-netlify="true" and name="contact"
-                 - Add: action="YOUR_MAILCHIMP_URL" method="post" target="_blank"
-                 ===================================================== -->
-            <form class="signup-form" id="signupForm" name="village-signup" method="POST" data-netlify="true" netlify-honeypot="bot-field">
-                <!-- Honeypot field for spam protection -->
-                <input type="hidden" name="form-name" value="village-signup">
-                <p style="display:none;">
-                    <label>Don't fill this out: <input name="bot-field"></label>
-                </p>
-
+            <!-- ============================================
+                 Signup creates a Firebase Auth account via a
+                 passwordless "magic link" - see the script at the
+                 bottom of this file (signupForm submit handler).
+                 Firebase emails the sign-in link automatically;
+                 clicking it lands the user on portal.html signed in.
+                 ============================================ -->
+            <form class="signup-form" id="signupForm" name="village-signup">
                 <div class="form-row">
                     <div class="form-group">
                         <label class="form-label">First Name</label>
-                        <input type="text" name="first-name" class="form-input" placeholder="First Name" required>
+                        <input type="text" name="first-name" id="signupFirstName" class="form-input" placeholder="First Name" required>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Last Name</label>
-                        <input type="text" name="last-name" class="form-input" placeholder="Last Name" required>
+                        <input type="text" name="last-name" id="signupLastName" class="form-input" placeholder="Last Name" required>
                     </div>
                 </div>
 
                 <div class="form-group">
                     <label class="form-label">Email Address</label>
-                    <input type="email" name="email" class="form-input" placeholder="your@email.com" required>
+                    <input type="email" name="email" id="signupEmail" class="form-input" placeholder="your@email.com" required>
                 </div>
 
-                <div class="form-group">
-                    <label class="form-label">Company / Brand (Optional)</label>
-                    <input type="text" name="company" class="form-input" placeholder="Company Name">
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">I'm interested in...</label>
-                    <select name="interest" class="form-select">
-                        <option value="">Select an option</option>
-                        <option value="Brand Updates">Brand Updates & News</option>
-                        <option value="Brand Deal">Brand Deal / Sponsorship</option>
-                        <option value="Partnership">Business Partnership</option>
-                        <option value="Collaboration">Creative Collaboration</option>
-                        <option value="Media">Media / Press Inquiry</option>
-                        <option value="Other">Other</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Message (Optional)</label>
-                    <textarea name="message" class="form-textarea" placeholder="Tell us more about your inquiry..."></textarea>
-                </div>
-
-                <button type="submit" class="submit-btn">SUBMIT</button>
+                <button type="submit" class="submit-btn" id="signupSubmitBtn">JOIN & GET MY LINK</button>
             </form>
         </div>
     </div>
@@ -221,6 +191,9 @@
          Uncomment the line below and replace YOUR_PAGE_ID
          <script src="//widget.manychat.com/YOUR_PAGE_ID.js" defer="defer"></script>
          ===================================================== -->
+
+    <!-- Firebase Config -->
+    <script src="firebase-config.js"></script>
 
     <script>
         // ============================================
@@ -717,35 +690,43 @@
             }
         });
 
-        // Form submission with Netlify Forms (AJAX)
+        // Village signup = create a member account via Firebase Auth's
+        // passwordless "magic link" sign-in. Firebase emails the link
+        // automatically (customize the template in Firebase Console ->
+        // Authentication -> Templates). Clicking it lands them on
+        // portal.html signed in, where their member profile gets created.
         signupForm.addEventListener('submit', async function(e) {
             e.preventDefault();
-            
-            const formData = new FormData(signupForm);
-            const submitBtn = signupForm.querySelector('.submit-btn');
-            
-            // Show loading state
+
+            const firstName = document.getElementById('signupFirstName').value.trim();
+            const lastName = document.getElementById('signupLastName').value.trim();
+            const email = document.getElementById('signupEmail').value.trim().toLowerCase();
+            const submitBtn = document.getElementById('signupSubmitBtn');
+
             submitBtn.textContent = 'SENDING...';
             submitBtn.disabled = true;
 
             try {
-                const response = await fetch('/', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: new URLSearchParams(formData).toString()
-                });
+                const actionCodeSettings = {
+                    // Must be an authorized domain in Firebase Auth settings.
+                    url: window.location.origin + window.location.pathname.replace(/index\.html$/, '') + 'portal.html',
+                    handleCodeInApp: true
+                };
 
-                if (response.ok) {
-                    // Show success message
-                    signupForm.style.display = 'none';
-                    successMessage.classList.add('show');
-                } else {
-                    throw new Error('Form submission failed');
-                }
+                await firebase.auth().sendSignInLinkToEmail(email, actionCodeSettings);
+
+                // Remember email + name on this device so portal.html can
+                // finish sign-in and create the member profile without
+                // asking again (falls back to asking if opened elsewhere).
+                window.localStorage.setItem('mvPendingEmail', email);
+                window.localStorage.setItem('mvPendingName', `${firstName} ${lastName}`.trim());
+
+                signupForm.style.display = 'none';
+                successMessage.classList.add('show');
             } catch (error) {
                 console.error('Error:', error);
-                alert('There was an error submitting the form. Please try again.');
-                submitBtn.textContent = 'SUBMIT';
+                alert('There was an error sending your sign-in link. Please try again.');
+                submitBtn.textContent = 'JOIN & GET MY LINK';
                 submitBtn.disabled = false;
             }
         });
