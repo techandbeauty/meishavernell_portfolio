@@ -8,10 +8,6 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400&family=Bebas+Neue&family=Montserrat:wght@200;300;400;500;600&display=swap" rel="stylesheet">
 
-    <!-- Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore-compat.js"></script>
-
     <link rel="stylesheet" href="main.css">
     <link rel="stylesheet" href="apps.css">
 
@@ -600,46 +596,55 @@
     </footer>
 
 
-    <!-- Firebase Config -->
-    <script src="firebase-config.js"></script>
-
     <script>
-        /* ─── SITE PHOTO SLOTS ─────────────────────────────────────
-           Uploaded from admin-dashboard.html -> Site Photos tab.
+        const CLOUDINARY_CLOUD_NAME = 'didqb05ko';
+
+        /* ─── CLOUDINARY IMAGE LOADER ─────────────────────────────
+           Tags set in Cloudinary → Media Library:
+             Praxis icon  → mv-app-praxis
+             MARC icon    → mv-app-marc
+             ASVAB bg     → mv-app-asvab  (optional — uses gradient fallback)
+
            nth-child numbers: 1=Praxis, 2=MARC (iOS section)
            Web section uses a separate query selector below.
         ─────────────────────────────────────────────────────────── */
         const appImages = [
             {
-                slot:   'apps-praxis',
+                tag:    'mv-app-praxis',
                 bgEl:   document.querySelector('#ios-section .app-showcase:nth-child(1) .app-visual-bg'),
                 iconEl: document.querySelector('#ios-section .app-showcase:nth-child(1) .app-icon')
             },
             {
-                slot:   'apps-marc',
+                tag:    'mv-app-marc',
                 bgEl:   document.querySelector('#ios-section .app-showcase:nth-child(2) .app-visual-bg'),
                 iconEl: document.querySelector('#ios-section .app-showcase:nth-child(2) .app-icon')
             },
             {
-                slot:   'apps-asvab',
+                tag:    'mv-app-asvab',
                 bgEl:   document.querySelector('#web-section .app-showcase:nth-child(1) .app-visual-bg'),
                 iconEl: null   // keep the emoji icon — set to null to skip icon replacement
             }
         ];
 
         async function loadAppImages() {
-            try {
-                const db = firebase.firestore();
-                for (const app of appImages) {
-                    const doc = await db.collection('siteMedia').doc(app.slot).get();
-                    if (!doc.exists) continue;
-                    const url = doc.data().url;
+            for (const app of appImages) {
+                try {
+                    const res = await fetch(
+                        `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/list/${app.tag}.json?_=${Date.now()}`
+                    );
+                    if (!res.ok) continue;
+                    const data = await res.json();
+                    if (!data.resources || data.resources.length === 0) continue;
+
+                    const img = data.resources[0];
+                    const url = `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload/q_auto,f_auto/${img.public_id}.${img.format}`;
 
                     if (app.bgEl)   app.bgEl.style.backgroundImage = `url('${url}')`;
                     if (app.iconEl) app.iconEl.innerHTML = `<img src="${url}" alt="App icon">`;
+
+                } catch (e) {
+                    console.log(`Cloudinary image not found for tag: ${app.tag}`);
                 }
-            } catch (e) {
-                console.log('Could not load app photos:', e.message);
             }
         }
 

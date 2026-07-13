@@ -13,11 +13,6 @@
     
     <!-- Page Styles -->
     <link rel="stylesheet" href="portfolio.css">
-
-    <!-- Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore-compat.js"></script>
-    <script src="firebase-config.js"></script>
 </head>
 <body>
     <div class="noise"></div>
@@ -64,7 +59,7 @@
 
     <!-- Portfolio Grid -->
     <div class="portfolio-grid" id="portfolioGrid">
-        <!-- Loaded dynamically from Firebase + GitHub -->
+        <!-- Loaded from Cloudinary -->
     </div>
 
     <!-- Featured Brands -->
@@ -111,13 +106,10 @@
 
     <script>
         // ============================================
-        // PORTFOLIO CONFIGURATION
+        // CLOUDINARY CONFIGURATION
         // ============================================
-        // Portfolio photos/videos are managed from admin-dashboard.html ->
-        // Site Photos tab (destination: Portfolio). Set a Project Key there
-        // matching one of the PROJECT_METADATA keys below to attach media
-        // to a specific project; otherwise it's added as a standalone project
-        // using the Title you enter.
+        const CLOUDINARY_CLOUD_NAME = 'didqb05ko';
+        const CLOUDINARY_PORTFOLIO_TAG = 'mv-portfolio';
         const GITHUB_USERNAME = 'techandbeauty'; // Your GitHub username
 
         // Project metadata (matched by filename)
@@ -198,47 +190,61 @@
             }
         };
 
-        // Default placeholder - set from the first uploaded portfolio image, or this fallback
+        // Default placeholder - fetched from Cloudinary mv-portfolio tag or fallback
         const FALLBACK_IMAGE = 'https://res.cloudinary.com/didqb05ko/image/upload/c_fill,g_auto,w_800,h_800,q_auto,f_auto/IMG_4465_2_v42fzh.jpg';
 
         let defaultImageUrl = FALLBACK_IMAGE;
         let allProjects = [];
 
         // ============================================
-        // LOAD FROM FIREBASE
+        // LOAD FROM CLOUDINARY
         // ============================================
         async function loadPortfolio() {
             const grid = document.getElementById('portfolioGrid');
             grid.innerHTML = Array(6).fill('<div class="portfolio-item loading"></div>').join('');
 
-            let portfolioMedia = [];
+            let cloudinaryMedia = [];
             let githubProjects = [];
 
-            // Load admin-uploaded portfolio media from Firebase
+            // Load from Cloudinary
             try {
-                const db = firebase.firestore();
-                const snapshot = await db.collection('portfolioMedia').orderBy('createdAt', 'desc').get();
+                // Fetch images
+                const imgRes = await fetch(`https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/list/${CLOUDINARY_PORTFOLIO_TAG}.json?_=${Date.now()}`);
+                if (imgRes.ok) {
+                    const imgData = await imgRes.json();
+                    if (imgData.resources && imgData.resources.length > 0) {
+                        // Set first image as default
+                        const firstImg = imgData.resources[0];
+                        defaultImageUrl = `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload/c_fill,g_auto,w_800,h_800,q_auto,f_auto/${firstImg.public_id}.${firstImg.format}`;
 
-                if (!snapshot.empty) {
-                    const docs = snapshot.docs.map(doc => doc.data());
-
-                    const firstImage = docs.find(d => d.type === 'image');
-                    if (firstImage) {
-                        defaultImageUrl = firstImage.url;
+                        cloudinaryMedia = cloudinaryMedia.concat(imgData.resources.map(r => ({
+                            type: 'image',
+                            publicId: r.public_id,
+                            format: r.format,
+                            thumb: `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload/c_fill,g_auto,w_800,h_800,q_auto,f_auto/${r.public_id}.${r.format}`,
+                            full: `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload/q_auto,f_auto/${r.public_id}.${r.format}`
+                        })));
                     }
-
-                    portfolioMedia = docs.map(d => ({
-                        type: d.type,
-                        projectKey: (d.projectKey || '').toLowerCase(),
-                        title: d.title || null,
-                        thumb: d.url,
-                        full: d.url
-                    }));
                 }
 
-                console.log(`Loaded ${portfolioMedia.length} items from Firebase`);
+                // Fetch videos
+                const vidRes = await fetch(`https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/video/list/${CLOUDINARY_PORTFOLIO_TAG}.json?_=${Date.now()}`);
+                if (vidRes.ok) {
+                    const vidData = await vidRes.json();
+                    if (vidData.resources) {
+                        cloudinaryMedia = cloudinaryMedia.concat(vidData.resources.map(r => ({
+                            type: 'video',
+                            publicId: r.public_id,
+                            format: r.format,
+                            thumb: `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/video/upload/c_fill,w_800,h_800,q_auto,so_0/${r.public_id}.jpg`,
+                            full: `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/video/upload/q_auto/${r.public_id}.${r.format}`
+                        })));
+                    }
+                }
+
+                console.log(`Loaded ${cloudinaryMedia.length} items from Cloudinary`);
             } catch (e) {
-                console.log('Firebase portfolio media error:', e.message);
+                console.log('Cloudinary error:', e.message);
             }
 
             // Load from GitHub
@@ -268,7 +274,7 @@
                 console.log('GitHub error:', e.message);
             }
 
-            // Build projects list - Always show GitHub + admin-uploaded media
+            // Build projects list - Always show GitHub + Cloudinary
             // Start with GitHub projects
             if (githubProjects.length > 0) {
                 allProjects = githubProjects.map(p => ({
@@ -278,36 +284,31 @@
                 }));
             }
 
-            // Add admin-uploaded media as additional projects (or replace matching ones)
-            if (portfolioMedia.length > 0) {
-                portfolioMedia.forEach((media) => {
-                    // Prefer an explicit Project Key match; fall back to
-                    // fuzzy-matching the Title against known project names.
-                    const meta = media.projectKey ? PROJECT_METADATA[media.projectKey] : null;
-                    const mediaTitleNorm = (media.title || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+            // Add Cloudinary media as additional projects (or replace matching ones)
+            if (cloudinaryMedia.length > 0) {
+                cloudinaryMedia.forEach((media) => {
+                    const filename = media.publicId.split('/').pop().toLowerCase().replace(/[^a-z0-9]/g, '');
+                    const meta = Object.entries(PROJECT_METADATA).find(([key]) => filename.includes(key));
 
                     // Check if this matches an existing GitHub project
-                    const existingIndex = allProjects.findIndex(p => {
-                        const pTitleNorm = p.title.toLowerCase().replace(/[^a-z0-9]/g, '');
-                        if (media.projectKey && pTitleNorm.includes(media.projectKey)) return true;
-                        if (mediaTitleNorm && (pTitleNorm.includes(mediaTitleNorm) || mediaTitleNorm.includes(pTitleNorm))) return true;
-                        return false;
-                    });
+                    const existingIndex = allProjects.findIndex(p =>
+                        filename.includes(p.title.toLowerCase().replace(/[^a-z0-9]/g, ''))
+                    );
 
                     const project = {
-                        title: meta ? meta.title : (media.title || formatName(media.projectKey || 'project')),
-                        category: meta ? meta.category : 'website',
-                        description: meta ? meta.description : 'A project from my portfolio.',
-                        technologies: meta ? meta.technologies : [],
-                        liveUrl: meta ? meta.liveUrl : null,
-                        githubUrl: meta ? meta.githubUrl : null,
+                        title: meta ? meta[1].title : formatName(media.publicId),
+                        category: meta ? meta[1].category : 'website',
+                        description: meta ? meta[1].description : 'A project from my portfolio.',
+                        technologies: meta ? meta[1].technologies : [],
+                        liveUrl: meta ? meta[1].liveUrl : null,
+                        githubUrl: meta ? meta[1].githubUrl : null,
                         image: media.thumb,
                         fullImage: media.full,
                         mediaType: media.type
                     };
 
                     if (existingIndex >= 0) {
-                        // Replace with uploaded image but keep GitHub data
+                        // Replace with Cloudinary image but keep GitHub data
                         allProjects[existingIndex] = {
                             ...allProjects[existingIndex],
                             image: media.thumb,
@@ -356,7 +357,7 @@
             if (filtered.length === 0) {
                 grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:60px;color:var(--light-gray);">
                     <p>No projects found.</p>
-                    <p style="font-size:0.7rem;margin-top:10px;">Upload project photos from the admin dashboard's <strong style="color:var(--gold);">Site Photos</strong> tab (destination: Portfolio).</p>
+                    <p style="font-size:0.7rem;margin-top:10px;">Upload to Cloudinary with tag: <strong style="color:var(--gold);">mv-portfolio</strong></p>
                 </div>`;
                 return;
             }

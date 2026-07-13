@@ -665,7 +665,10 @@
             </div>
 
             <div class="content-section">
-                <h2 class="section-title">Current Site Photos</h2>
+                <h2 class="section-title">Currently Live (read-only preview)</h2>
+                <p style="font-size: 0.75rem; color: var(--light-gray); margin-bottom: 12px;">
+                    To remove or reorganize a photo, do it in your Cloudinary Media Library directly — this dashboard can only add photos, not delete them.
+                </p>
                 <div class="loading" id="siteMediaLoading">Loading...</div>
                 <div id="siteMediaItems"></div>
             </div>
@@ -1110,15 +1113,24 @@
 
         // ============================================
         // SITE PHOTOS (hero slideshow, about, apps, portfolio)
+        // Uploads go straight to Cloudinary (same place the live pages
+        // already read from), tagged so each page's existing loader picks
+        // them up automatically. Requires an unsigned upload preset named
+        // exactly "mv-site-uploads" in Cloudinary (Settings -> Upload ->
+        // Upload presets), with Overwrite = ON and Unique filename = OFF.
         // ============================================
-        const SINGLE_SLOTS = ['intro-video', 'about-creator', 'about-engineer', 'apps-praxis', 'apps-marc', 'apps-asvab'];
-        const SLOT_LABELS = {
-            'intro-video': 'Homepage Intro Video',
-            'about-creator': 'About - The Creator',
-            'about-engineer': 'About - The Engineer',
-            'apps-praxis': 'Apps - Praxis icon',
-            'apps-marc': 'Apps - MARC icon',
-            'apps-asvab': 'Apps - ASVAB background'
+        const CLOUDINARY_CLOUD_NAME = 'didqb05ko';
+        const CLOUDINARY_UPLOAD_PRESET = 'mv-site-uploads';
+
+        const SITE_DESTINATIONS = {
+            'hero-slide':     { label: 'Hero Slideshow',           tag: 'mv-gallery',        resourceType: 'auto' },
+            'intro-video':    { label: 'Homepage Intro Video',     tag: 'mv-intro',          resourceType: 'video', publicId: 'mv-intro-video' },
+            'about-creator':  { label: 'About - The Creator',      tag: 'mv-about-creator',  resourceType: 'image', publicId: 'mv-about-creator' },
+            'about-engineer': { label: 'About - The Engineer',     tag: 'mv-about-engineer', resourceType: 'image', publicId: 'mv-about-engineer' },
+            'apps-praxis':    { label: 'Apps - Praxis icon',       tag: 'mv-app-praxis',     resourceType: 'image', publicId: 'mv-app-praxis' },
+            'apps-marc':      { label: 'Apps - MARC icon',         tag: 'mv-app-marc',       resourceType: 'image', publicId: 'mv-app-marc' },
+            'apps-asvab':     { label: 'Apps - ASVAB background',  tag: 'mv-app-asvab',      resourceType: 'image', publicId: 'mv-app-asvab' },
+            'portfolio':      { label: 'Portfolio',                tag: 'mv-portfolio',      resourceType: 'auto' }
         };
 
         const siteMediaDestination = document.getElementById('siteMediaDestination');
@@ -1138,7 +1150,8 @@
         document.getElementById('siteMediaUploadForm').addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            const destination = siteMediaDestination.value;
+            const destinationKey = siteMediaDestination.value;
+            const dest = SITE_DESTINATIONS[destinationKey];
             const file = siteMediaFile.files[0];
             const uploadBtn = document.getElementById('siteMediaUploadBtn');
 
@@ -1151,42 +1164,31 @@
             uploadBtn.textContent = 'UPLOADING...';
 
             try {
-                const timestamp = Date.now();
-                const type = file.type.startsWith('video/') ? 'video' : 'image';
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+                formData.append('tags', dest.tag);
 
-                if (destination === 'hero-slide') {
-                    const storageRef = firebase.storage().ref(`heroSlides/${timestamp}-${file.name}`);
-                    const snapshot = await storageRef.put(file);
-                    const url = await snapshot.ref.getDownloadURL();
-                    await firebase.firestore().collection('heroSlides').add({
-                        url, type, order: timestamp,
-                        storagePath: `heroSlides/${timestamp}-${file.name}`,
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                } else if (destination === 'portfolio') {
-                    const storageRef = firebase.storage().ref(`portfolioMedia/${timestamp}-${file.name}`);
-                    const snapshot = await storageRef.put(file);
-                    const url = await snapshot.ref.getDownloadURL();
-                    await firebase.firestore().collection('portfolioMedia').add({
-                        url, type,
-                        projectKey: document.getElementById('portfolioProjectKey').value.trim().toLowerCase(),
-                        title: document.getElementById('portfolioTitle').value.trim(),
-                        storagePath: `portfolioMedia/${timestamp}-${file.name}`,
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                } else {
-                    // Single named slot - replaces whatever was there before
-                    const storageRef = firebase.storage().ref(`siteMedia/${destination}-${timestamp}-${file.name}`);
-                    const snapshot = await storageRef.put(file);
-                    const url = await snapshot.ref.getDownloadURL();
-                    await firebase.firestore().collection('siteMedia').doc(destination).set({
-                        url, type,
-                        storagePath: `siteMedia/${destination}-${timestamp}-${file.name}`,
-                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
+                if (dest.publicId) {
+                    // Single-slot destination: always overwrite the same
+                    // asset so the site always shows the latest upload.
+                    formData.append('public_id', dest.publicId);
+                } else if (destinationKey === 'portfolio') {
+                    const projectKey = document.getElementById('portfolioProjectKey').value.trim().toLowerCase();
+                    if (projectKey) {
+                        formData.append('public_id', `${projectKey}-${Date.now()}`);
+                    }
                 }
 
-                showStatus('siteMediaStatus', '✓ Uploaded!', 'success');
+                const uploadUrl = `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${dest.resourceType}/upload`;
+                const res = await fetch(uploadUrl, { method: 'POST', body: formData });
+                const data = await res.json();
+
+                if (!res.ok) {
+                    throw new Error(data.error?.message || 'Upload failed');
+                }
+
+                showStatus('siteMediaStatus', `✓ Uploaded to ${dest.label}!`, 'success');
                 document.getElementById('siteMediaUploadForm').reset();
                 siteMediaFileName.textContent = '';
                 portfolioFieldsRow.style.display = 'none';
@@ -1202,107 +1204,60 @@
         async function loadSiteMedia() {
             const container = document.getElementById('siteMediaItems');
             const loading = document.getElementById('siteMediaLoading');
+            loading.style.display = 'block';
+            container.innerHTML = '';
 
             try {
-                const [slotsSnap, heroSnap, portfolioSnap] = await Promise.all([
-                    firebase.firestore().collection('siteMedia').get(),
-                    firebase.firestore().collection('heroSlides').orderBy('order', 'desc').get(),
-                    firebase.firestore().collection('portfolioMedia').orderBy('createdAt', 'desc').get()
-                ]);
+                const sections = await Promise.all(Object.values(SITE_DESTINATIONS).map(async (dest) => {
+                    const items = [];
+                    const fetches = [];
+
+                    if (dest.resourceType === 'image' || dest.resourceType === 'auto') {
+                        fetches.push(
+                            fetch(`https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/list/${dest.tag}.json?_=${Date.now()}`)
+                                .then(r => r.ok ? r.json() : { resources: [] })
+                                .then(d => (d.resources || []).forEach(r => items.push({
+                                    type: 'image',
+                                    url: `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload/q_auto,f_auto/${r.public_id}.${r.format}`
+                                })))
+                                .catch(() => {})
+                        );
+                    }
+                    if (dest.resourceType === 'video' || dest.resourceType === 'auto') {
+                        fetches.push(
+                            fetch(`https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/video/list/${dest.tag}.json?_=${Date.now()}`)
+                                .then(r => r.ok ? r.json() : { resources: [] })
+                                .then(d => (d.resources || []).forEach(r => items.push({
+                                    type: 'video',
+                                    url: `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/video/upload/q_auto/${r.public_id}.${r.format}`
+                                })))
+                                .catch(() => {})
+                        );
+                    }
+
+                    await Promise.all(fetches);
+                    return { label: dest.label, items };
+                }));
 
                 loading.style.display = 'none';
 
                 let html = '';
-
-                if (!slotsSnap.empty) {
-                    html += '<h3 style="color: var(--gold); font-size: 0.75rem; letter-spacing: 0.1rem; text-transform: uppercase; margin-bottom: 12px;">Fixed Photo Slots</h3>';
-                    html += '<div class="gallery-items">' + slotsSnap.docs.map(doc => {
-                        const data = doc.data();
-                        const preview = data.type === 'video'
-                            ? `<video src="${data.url}" muted style="width:100%;aspect-ratio:1;object-fit:cover;"></video>`
-                            : `<img src="${data.url}" style="width:100%;aspect-ratio:1;object-fit:cover;">`;
-                        return `
-                            <div style="background: var(--dark-gray); border: 1px solid var(--mid-gray); padding: 10px;">
-                                ${preview}
-                                <p style="font-size: 0.7rem; color: var(--light-gray); margin: 8px 0;">${SLOT_LABELS[doc.id] || doc.id}</p>
-                                <button onclick="deleteSiteMediaSlot('${doc.id}', '${data.storagePath || ''}')" style="width:100%; background: transparent; border: 1px solid var(--mid-gray); color: #fca5a5; padding: 6px; cursor: pointer; font-size: 0.7rem;">DELETE</button>
-                            </div>
-                        `;
-                    }).join('') + '</div>';
-                }
-
-                if (!heroSnap.empty) {
-                    html += '<h3 style="color: var(--gold); font-size: 0.75rem; letter-spacing: 0.1rem; text-transform: uppercase; margin: 24px 0 12px;">Hero Slideshow</h3>';
-                    html += '<div class="gallery-items">' + heroSnap.docs.map(doc => {
-                        const data = doc.data();
-                        const preview = data.type === 'video'
-                            ? `<video src="${data.url}" muted style="width:100%;aspect-ratio:1;object-fit:cover;"></video>`
-                            : `<img src="${data.url}" style="width:100%;aspect-ratio:1;object-fit:cover;">`;
-                        return `
-                            <div style="background: var(--dark-gray); border: 1px solid var(--mid-gray); padding: 10px;">
-                                ${preview}
-                                <button onclick="deleteHeroSlide('${doc.id}', '${data.storagePath || ''}')" style="width:100%; margin-top:8px; background: transparent; border: 1px solid var(--mid-gray); color: #fca5a5; padding: 6px; cursor: pointer; font-size: 0.7rem;">DELETE</button>
-                            </div>
-                        `;
-                    }).join('') + '</div>';
-                }
-
-                if (!portfolioSnap.empty) {
-                    html += '<h3 style="color: var(--gold); font-size: 0.75rem; letter-spacing: 0.1rem; text-transform: uppercase; margin: 24px 0 12px;">Portfolio Media</h3>';
-                    html += '<div class="gallery-items">' + portfolioSnap.docs.map(doc => {
-                        const data = doc.data();
-                        const preview = data.type === 'video'
-                            ? `<video src="${data.url}" muted style="width:100%;aspect-ratio:1;object-fit:cover;"></video>`
-                            : `<img src="${data.url}" style="width:100%;aspect-ratio:1;object-fit:cover;">`;
-                        return `
-                            <div style="background: var(--dark-gray); border: 1px solid var(--mid-gray); padding: 10px;">
-                                ${preview}
-                                <p style="font-size: 0.7rem; color: var(--light-gray); margin: 8px 0;">${data.projectKey || data.title || 'Standalone'}</p>
-                                <button onclick="deletePortfolioMedia('${doc.id}', '${data.storagePath || ''}')" style="width:100%; background: transparent; border: 1px solid var(--mid-gray); color: #fca5a5; padding: 6px; cursor: pointer; font-size: 0.7rem;">DELETE</button>
-                            </div>
-                        `;
-                    }).join('') + '</div>';
-                }
+                sections.forEach(section => {
+                    if (section.items.length === 0) return;
+                    html += `<h3 style="color: var(--gold); font-size: 0.75rem; letter-spacing: 0.1rem; text-transform: uppercase; margin: 24px 0 12px;">${section.label} (${section.items.length})</h3>`;
+                    html += '<div class="gallery-items">' + section.items.map(item => `
+                        <div style="background: var(--dark-gray); border: 1px solid var(--mid-gray); padding: 10px;">
+                            ${item.type === 'video'
+                                ? `<video src="${item.url}" muted style="width:100%;aspect-ratio:1;object-fit:cover;"></video>`
+                                : `<img src="${item.url}" style="width:100%;aspect-ratio:1;object-fit:cover;">`}
+                        </div>
+                    `).join('') + '</div>';
+                });
 
                 container.innerHTML = html || '<p style="text-align: center; color: var(--light-gray);">No site photos uploaded yet.</p>';
             } catch (error) {
-                loading.innerHTML = `<p style="color: #fca5a5;">Error loading site photos: ${error.message}</p>`;
-            }
-        }
-
-        async function deleteSiteMediaSlot(slotId, storagePath) {
-            if (!confirm('Delete this photo? The page will show its default image until you upload a new one.')) return;
-            try {
-                if (storagePath) await firebase.storage().ref(storagePath).delete();
-                await firebase.firestore().collection('siteMedia').doc(slotId).delete();
-                loadSiteMedia();
-                showStatus('siteMediaStatus', '✓ Deleted', 'success');
-            } catch (error) {
-                showStatus('siteMediaStatus', `Error: ${error.message}`, 'error');
-            }
-        }
-
-        async function deleteHeroSlide(docId, storagePath) {
-            if (!confirm('Delete this slide?')) return;
-            try {
-                if (storagePath) await firebase.storage().ref(storagePath).delete();
-                await firebase.firestore().collection('heroSlides').doc(docId).delete();
-                loadSiteMedia();
-                showStatus('siteMediaStatus', '✓ Deleted', 'success');
-            } catch (error) {
-                showStatus('siteMediaStatus', `Error: ${error.message}`, 'error');
-            }
-        }
-
-        async function deletePortfolioMedia(docId, storagePath) {
-            if (!confirm('Delete this portfolio media?')) return;
-            try {
-                if (storagePath) await firebase.storage().ref(storagePath).delete();
-                await firebase.firestore().collection('portfolioMedia').doc(docId).delete();
-                loadSiteMedia();
-                showStatus('siteMediaStatus', '✓ Deleted', 'success');
-            } catch (error) {
-                showStatus('siteMediaStatus', `Error: ${error.message}`, 'error');
+                loading.style.display = 'none';
+                container.innerHTML = `<p style="color: #fca5a5;">Error loading site photos: ${error.message}</p>`;
             }
         }
 
