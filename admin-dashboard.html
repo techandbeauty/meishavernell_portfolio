@@ -514,6 +514,7 @@
             <h1 class="login-title">ADMIN</h1>
             <p class="login-subtitle">Content Management System</p>
             <div class="login-error" id="loginError"></div>
+            <div class="login-error" id="resetSuccess" style="background: rgba(90,170,100,0.15); border-color: rgba(90,170,100,0.4); color: #8fce9a;"></div>
             <form class="login-form" id="loginForm">
                 <div class="form-group">
                     <label for="email">Email</label>
@@ -525,6 +526,9 @@
                 </div>
                 <button type="submit" class="login-btn" id="loginBtn">LOGIN</button>
             </form>
+            <p style="text-align: center; margin-top: 16px;">
+                <a href="#" id="forgotPasswordLink" style="color: var(--light-gray); font-size: 0.75rem; text-decoration: underline;">Forgot password?</a>
+            </p>
         </div>
     </div>
 
@@ -799,13 +803,13 @@
                             <input type="text" id="noteSubject" placeholder="e.g., General">
                         </div>
                         <div class="form-group">
-                            <label>Attachment (Optional)</label>
+                            <label>Attachment - PDF, Doc, or Photo (Optional)</label>
                             <div class="file-input-wrapper">
                                 <label class="file-input-label" for="noteFile">
                                     <div>📄 Click to upload</div>
                                     <div class="file-name" id="noteFileName"></div>
                                 </label>
-                                <input type="file" id="noteFile" accept=".pdf,.doc,.docx">
+                                <input type="file" id="noteFile" accept=".pdf,.doc,.docx,image/*">
                             </div>
                         </div>
                     </div>
@@ -940,6 +944,36 @@
             firebase.auth().signOut();
             showLogin();
             loginForm.reset();
+        });
+
+        // ============================================
+        // FORGOT PASSWORD (self-service reset)
+        // ============================================
+        const resetSuccess = document.getElementById('resetSuccess');
+
+        document.getElementById('forgotPasswordLink').addEventListener('click', async (e) => {
+            e.preventDefault();
+
+            const email = document.getElementById('email').value.trim();
+            loginError.style.display = 'none';
+            resetSuccess.style.display = 'none';
+
+            if (!email) {
+                loginError.textContent = 'Enter your email above first, then click "Forgot password?"';
+                loginError.style.display = 'block';
+                return;
+            }
+
+            try {
+                // Firebase hosts the actual "set a new password" page for
+                // you - no extra page needed on this site.
+                await firebase.auth().sendPasswordResetEmail(email);
+                resetSuccess.textContent = `Password reset link sent to ${email}. Check your inbox.`;
+                resetSuccess.style.display = 'block';
+            } catch (error) {
+                loginError.textContent = error.message;
+                loginError.style.display = 'block';
+            }
         });
 
         // ============================================
@@ -1329,12 +1363,14 @@
 
             try {
                 let fileUrl = '';
+                let fileType = '';
                 const file = noteFile.files[0];
                 if (file) {
                     const timestamp = Date.now();
                     const storageRef = firebase.storage().ref(`studyNotes/${timestamp}-${file.name}`);
                     const snapshot = await storageRef.put(file);
                     fileUrl = await snapshot.ref.getDownloadURL();
+                    fileType = file.type.startsWith('image/') ? 'image' : 'document';
                 }
 
                 await firebase.firestore().collection('studyNotes').add({
@@ -1342,6 +1378,7 @@
                     subject: document.getElementById('noteSubject').value,
                     content: document.getElementById('noteContent').value,
                     fileUrl: fileUrl,
+                    fileType: fileType,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
 
@@ -1377,7 +1414,8 @@
                             <h3 style="color: var(--white); margin-bottom: 8px;">${data.title}</h3>
                             <p style="font-size: 0.8rem; color: var(--gold); margin-bottom: 12px; text-transform: uppercase;">${data.subject || 'General'}</p>
                             <p style="color: var(--light-gray); margin-bottom: 15px; line-height: 1.6;">${(data.content || '').substring(0, 200)}...</p>
-                            ${data.fileUrl ? `<p style="font-size: 0.85rem; color: var(--gold); margin-bottom: 15px;"><a href="${data.fileUrl}" target="_blank" style="color: var(--gold);">📄 View File</a></p>` : ''}
+                            ${data.fileUrl && data.fileType === 'image' ? `<img src="${data.fileUrl}" style="max-width: 200px; border-radius: 4px; margin-bottom: 15px; display: block;">` : ''}
+                            ${data.fileUrl && data.fileType !== 'image' ? `<p style="font-size: 0.85rem; color: var(--gold); margin-bottom: 15px;"><a href="${data.fileUrl}" target="_blank" style="color: var(--gold);">📄 View File</a></p>` : ''}
                             <button onclick="deleteNote('${doc.id}')" style="background: transparent; border: 1px solid var(--mid-gray); color: #fca5a5; padding: 8px 15px; cursor: pointer; font-size: 0.8rem;">DELETE</button>
                         </div>
                     `;

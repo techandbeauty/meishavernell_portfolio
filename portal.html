@@ -73,12 +73,31 @@
             <!-- Shown for returning members with no link -->
             <div id="portalRequestLink">
                 <h2>Member Login</h2>
-                <p>Enter your email and we'll send you a one-click sign-in link. Not a member yet? Join from the homepage.</p>
+                <p>Choose how you'd like to sign in.</p>
+
+                <button type="button" class="portal-btn portal-btn-apple" id="appleSignInBtn">
+                    <svg viewBox="0 0 384 512" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"/></svg>
+                    Continue with Apple
+                </button>
+
+                <div class="portal-divider"><span>or</span></div>
+
+                <form id="passwordForm">
+                    <input type="email" class="portal-input" id="passwordEmail" placeholder="your@email.com" required>
+                    <input type="password" class="portal-input" id="passwordInput" placeholder="Password" required minlength="6">
+                    <button type="submit" class="portal-btn" id="passwordSubmitBtn">Log In</button>
+                </form>
+                <div class="portal-links-row">
+                    <a href="#" id="toggleSignupLink">New here? Create an account</a>
+                    <a href="#" id="forgotPasswordPortalLink">Forgot password?</a>
+                </div>
+
+                <div class="portal-divider"><span>or</span></div>
+
                 <form id="requestLinkForm">
                     <input type="email" class="portal-input" id="requestLinkEmail" placeholder="your@email.com" required>
-                    <button type="submit" class="portal-btn" id="requestLinkBtn">Email Me a Sign-In Link</button>
+                    <button type="submit" class="portal-btn portal-btn-secondary" id="requestLinkBtn">Email Me a Sign-In Link</button>
                 </form>
-                <p class="portal-note">Not a member yet? <a href="index.html" style="color: var(--gold);">Join here</a>.</p>
             </div>
 
             <!-- Shown right after a link is sent from this page -->
@@ -139,6 +158,17 @@
         const errorBox = document.getElementById('portalError');
 
         function showError(msg) {
+            errorBox.style.background = '';
+            errorBox.style.borderColor = '';
+            errorBox.style.color = '';
+            errorBox.textContent = msg;
+            errorBox.classList.add('show');
+        }
+
+        function showSuccessMsg(msg) {
+            errorBox.style.background = 'rgba(90,170,100,0.15)';
+            errorBox.style.borderColor = 'rgba(90,170,100,0.4)';
+            errorBox.style.color = '#8fce9a';
             errorBox.textContent = msg;
             errorBox.classList.add('show');
         }
@@ -219,12 +249,97 @@
         document.getElementById('signOutBtn').addEventListener('click', () => auth.signOut());
 
         // ============================================
+        // EMAIL + PASSWORD (log in / create account / reset)
+        // ============================================
+        let isSignupMode = false;
+        const passwordForm = document.getElementById('passwordForm');
+        const passwordSubmitBtn = document.getElementById('passwordSubmitBtn');
+        const toggleSignupLink = document.getElementById('toggleSignupLink');
+
+        toggleSignupLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            isSignupMode = !isSignupMode;
+            passwordSubmitBtn.textContent = isSignupMode ? 'Create Account' : 'Log In';
+            toggleSignupLink.textContent = isSignupMode
+                ? 'Already a member? Log in'
+                : 'New here? Create an account';
+        });
+
+        passwordForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('passwordEmail').value.trim().toLowerCase();
+            const password = document.getElementById('passwordInput').value;
+
+            errorBox.classList.remove('show');
+            passwordSubmitBtn.disabled = true;
+            passwordSubmitBtn.textContent = isSignupMode ? 'Creating…' : 'Logging In…';
+
+            try {
+                if (isSignupMode) {
+                    await auth.createUserWithEmailAndPassword(email, password);
+                } else {
+                    await auth.signInWithEmailAndPassword(email, password);
+                }
+                // onAuthStateChanged takes over from here
+            } catch (err) {
+                console.error(err);
+                showError(err.message);
+                passwordSubmitBtn.disabled = false;
+                passwordSubmitBtn.textContent = isSignupMode ? 'Create Account' : 'Log In';
+            }
+        });
+
+        document.getElementById('forgotPasswordPortalLink').addEventListener('click', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('passwordEmail').value.trim().toLowerCase();
+            errorBox.classList.remove('show');
+
+            if (!email) {
+                showError('Enter your email above first, then click "Forgot password?"');
+                return;
+            }
+
+            try {
+                await auth.sendPasswordResetEmail(email);
+                showSuccessMsg('Password reset link sent - check your inbox.');
+            } catch (err) {
+                console.error(err);
+                showError(err.message);
+            }
+        });
+
+        // ============================================
+        // SIGN IN WITH APPLE
+        // ============================================
+        document.getElementById('appleSignInBtn').addEventListener('click', () => {
+            const provider = new firebase.auth.OAuthProvider('apple.com');
+            provider.addScope('email');
+            provider.addScope('name');
+            auth.signInWithRedirect(provider);
+        });
+
+        // Apple only includes the user's name on the very first sign-in,
+        // delivered via the redirect result rather than auth.currentUser.
+        auth.getRedirectResult().then((result) => {
+            if (result && result.user && result.additionalUserInfo && result.additionalUserInfo.profile) {
+                const profile = result.additionalUserInfo.profile;
+                const name = [profile.firstName, profile.lastName].filter(Boolean).join(' ');
+                if (name) window.localStorage.setItem('mvPendingName', name);
+            }
+        }).catch((err) => {
+            if (err && err.code && err.code !== 'auth/no-current-user') {
+                console.error(err);
+                showError(err.message);
+            }
+        });
+
+        // ============================================
         // AUTH STATE -> show login gate or dashboard
         // ============================================
         async function ensureMemberProfile(user) {
             const ref = db.collection('members').doc(user.uid);
             const snap = await ref.get();
-            const pendingName = window.localStorage.getItem('mvPendingName') || '';
+            const pendingName = window.localStorage.getItem('mvPendingName') || user.displayName || '';
 
             const data = {
                 email: user.email,
@@ -409,7 +524,12 @@
                     <div class="note-title">${item.title}</div>
                     <div class="note-subject">${item.subject || 'General'}</div>
                     <div class="note-content">${item.content || ''}</div>
-                    ${item.fileUrl ? `<a class="note-file-link" href="${item.fileUrl}" target="_blank" rel="noopener">Download File →</a>` : ''}
+                    ${item.fileUrl && item.fileType === 'image'
+                        ? `<a href="${item.fileUrl}" target="_blank" rel="noopener"><img src="${item.fileUrl}" class="note-image" alt="${item.title}"></a>`
+                        : ''}
+                    ${item.fileUrl && item.fileType !== 'image'
+                        ? `<a class="note-file-link" href="${item.fileUrl}" target="_blank" rel="noopener">Download File →</a>`
+                        : ''}
                 </div>
             `).join('');
         }
