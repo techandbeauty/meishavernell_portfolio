@@ -32,6 +32,14 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // LookBook album definitions (Mei, Lifestyle, Repository, Service,
+    // Milestones, plus any custom albums the admin adds). Public read so
+    // the LookBook page can build its album grid.
+    match /galleryCategories/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     // Named single-photo slots (about-creator, about-engineer,
     // apps-praxis, apps-marc, apps-asvab, intro-video) - public site
     // content, only admin can replace them.
