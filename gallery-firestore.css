@@ -95,6 +95,127 @@
     color: var(--light-gray);
 }
 
+/* Album Grid (Instagram-profile-style) */
+.album-grid-section {
+    padding: 20px 40px 60px;
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.album-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4px;
+}
+
+.album-tile {
+    position: relative;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    cursor: pointer;
+    background: var(--dark-gray);
+    border: 1px solid var(--mid-gray);
+}
+
+.album-tile-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease, filter 0.3s ease;
+}
+
+.album-tile-empty {
+    background: var(--dark-gray);
+}
+
+.album-tile:hover .album-tile-image {
+    transform: scale(1.05);
+    filter: brightness(0.6);
+}
+
+.album-tile-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.75) 0%, rgba(0, 0, 0, 0.15) 55%, rgba(0, 0, 0, 0.35) 100%);
+    padding: 10px;
+}
+
+.album-tile-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.2rem;
+    letter-spacing: 0.15rem;
+    color: var(--white);
+    text-transform: uppercase;
+}
+
+.album-tile-subtitle {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 0.75rem;
+    color: var(--gold);
+    margin-top: 4px;
+}
+
+.album-tile-count {
+    font-size: 0.62rem;
+    letter-spacing: 0.1rem;
+    color: var(--light-gray);
+    margin-top: 8px;
+    text-transform: uppercase;
+}
+
+/* Album Detail View */
+.album-detail-section {
+    padding: 20px 40px 60px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.back-to-albums {
+    display: inline-block;
+    background: transparent;
+    border: 1px solid var(--mid-gray);
+    color: var(--light-gray);
+    padding: 8px 18px;
+    font-size: 0.75rem;
+    letter-spacing: 0.1rem;
+    text-transform: uppercase;
+    cursor: pointer;
+    margin: 0 0 20px;
+    transition: all 0.3s ease;
+}
+
+.back-to-albums:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+}
+
+.album-detail-header {
+    text-align: center;
+    padding: 0 0 20px;
+}
+
+.album-detail-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 2rem;
+    letter-spacing: 0.2rem;
+    color: var(--white);
+}
+
+.album-detail-subtitle {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.8rem;
+    letter-spacing: 0.1rem;
+    color: var(--gold);
+    text-transform: uppercase;
+    margin-top: 6px;
+}
+
 /* Gallery Section */
 .gallery-section {
     padding: 40px;
@@ -279,7 +400,8 @@
     margin-bottom: 30px;
 }
 
-.modal-image-container img {
+.modal-image-container img,
+.modal-image-container video {
     width: 100%;
     height: 100%;
     object-fit: contain;
@@ -375,6 +497,38 @@
 
     .filter-tab-subtitle {
         font-size: 0.62rem;
+    }
+
+    .album-grid-section {
+        padding: 10px 8px 40px;
+    }
+
+    .album-grid {
+        gap: 2px;
+    }
+
+    .album-tile-title {
+        font-size: 0.9rem;
+    }
+
+    .album-tile-subtitle {
+        font-size: 0.62rem;
+    }
+
+    .album-tile-count {
+        font-size: 0.55rem;
+    }
+
+    .album-detail-section {
+        padding: 15px 15px 40px;
+    }
+
+    .back-to-albums {
+        margin: 0 0 15px;
+    }
+
+    .album-detail-title {
+        font-size: 1.5rem;
     }
 }
 

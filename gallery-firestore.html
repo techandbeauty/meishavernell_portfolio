@@ -49,49 +49,36 @@
         <p class="gallery-subtitle"> Moving Forward: Life Behind the Code </p>
     </header>
 
-    <!-- Filter Tabs - a documentary arc told through photos & videos -->
-    <div class="filter-section">
-        <div class="filter-tabs">
-            <button class="filter-tab active" data-filter="all">
-                <span class="filter-tab-title">Mei</span>
-                <span class="filter-tab-subtitle">Who I am</span>
-            </button>
-            <button class="filter-tab" data-filter="lifestyle">
-                <span class="filter-tab-title">Lifestyle</span>
-                <span class="filter-tab-subtitle">How I live</span>
-            </button>
-            <button class="filter-tab" data-filter="repository">
-                <span class="filter-tab-title">Repository</span>
-                <span class="filter-tab-subtitle">What I build</span>
-            </button>
-            <button class="filter-tab" data-filter="service">
-                <span class="filter-tab-title">Service</span>
-                <span class="filter-tab-subtitle">What I stand for</span>
-            </button>
-            <button class="filter-tab" data-filter="milestones">
-                <span class="filter-tab-title">Milestones</span>
-                <span class="filter-tab-subtitle">How far I've come</span>
-            </button>
+    <!-- Album Grid (Instagram-style) - tap an album to see its photos/videos -->
+    <section class="album-grid-section" id="albumGridSection">
+        <div class="album-grid" id="albumGrid">
+            <div class="loading">Loading albums...</div>
         </div>
-    </div>
+    </section>
 
-    <!-- Gallery Carousel -->
-    <section class="gallery-section">
+    <!-- Album Detail View -->
+    <section class="album-detail-section" id="albumDetailSection" style="display: none;">
+        <button class="back-to-albums" id="backToAlbums">← All Albums</button>
+        <div class="album-detail-header">
+            <h2 class="album-detail-title" id="albumDetailTitle"></h2>
+            <p class="album-detail-subtitle" id="albumDetailSubtitle"></p>
+        </div>
         <div class="carousel-wrap">
             <button class="carousel-arrow carousel-arrow-prev" id="carouselPrev" aria-label="Previous photo">‹</button>
             <div class="gallery-grid" id="galleryGrid">
-                <div class="loading">Loading gallery...</div>
+                <div class="loading">Loading...</div>
             </div>
             <button class="carousel-arrow carousel-arrow-next" id="carouselNext" aria-label="Next photo">›</button>
         </div>
         <div class="carousel-counter" id="carouselCounter"></div>
     </section>
 
-    <!-- Image Modal -->
+    <!-- Image/Video Modal -->
     <div class="image-modal" id="imageModal">
         <button class="modal-close" id="modalClose">✕</button>
         <div class="modal-image-container">
             <img id="modalImage" src="" alt="">
+            <video id="modalVideo" src="" controls playsinline style="display: none;"></video>
         </div>
         <div class="modal-info">
             <h3 id="modalCaption"></h3>
@@ -110,21 +97,26 @@
     <!-- Gallery Script -->
     <script>
         let allPhotos = [];
-        let currentFilter = 'all';
+        let categories = [];
+        let currentCategory = null;
 
         // ============================================
-        // LOAD GALLERY FROM FIRESTORE
+        // LOAD GALLERY + ALBUMS FROM FIRESTORE
         // ============================================
         async function loadGallery() {
-            const grid = document.getElementById('galleryGrid');
-            
-            try {
-                const snapshot = await firebase.firestore()
-                    .collection('gallery')
-                    .orderBy('uploadedAt', 'desc')
-                    .get();
+            const grid = document.getElementById('albumGrid');
 
-                if (snapshot.empty) {
+            try {
+                const db = firebase.firestore();
+                const [gallerySnap, catSnap] = await Promise.all([
+                    db.collection('gallery').orderBy('uploadedAt', 'desc').get(),
+                    db.collection('galleryCategories').orderBy('order', 'asc').get()
+                ]);
+
+                allPhotos = gallerySnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                categories = catSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+                if (categories.length === 0) {
                     grid.innerHTML = `
                         <div class="empty-state">
                             <p>Gallery coming soon!</p>
@@ -136,13 +128,7 @@
                     return;
                 }
 
-                // Convert Firestore docs to array
-                allPhotos = snapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
-                }));
-
-                renderGallery();
+                renderAlbumGrid();
             } catch (error) {
                 console.error('Error loading gallery:', error);
                 grid.innerHTML = '<div class="empty-state"><p>Error loading gallery</p></div>';
@@ -150,33 +136,81 @@
         }
 
         // ============================================
-        // RENDER GALLERY WITH FILTER
+        // ALBUM GRID (Instagram-style)
+        // ============================================
+        function renderAlbumGrid() {
+            const grid = document.getElementById('albumGrid');
+
+            grid.innerHTML = categories.map(cat => {
+                const photosInCat = allPhotos.filter(p => p.category === cat.key);
+                const cover = photosInCat[0];
+                const count = photosInCat.length;
+                return `
+                    <div class="album-tile" data-key="${cat.key}">
+                        ${cover
+                            ? (cover.type === 'video'
+                                ? `<video class="album-tile-image" src="${cover.url}" muted loop autoplay playsinline></video>`
+                                : `<img class="album-tile-image" src="${cover.url}" alt="${cat.label}" loading="lazy">`)
+                            : `<div class="album-tile-image album-tile-empty"></div>`}
+                        <div class="album-tile-overlay">
+                            <div class="album-tile-title">${cat.label}</div>
+                            ${cat.subtitle ? `<div class="album-tile-subtitle">${cat.subtitle}</div>` : ''}
+                            <div class="album-tile-count">${count} ${count === 1 ? 'ITEM' : 'ITEMS'}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            document.querySelectorAll('.album-tile').forEach(tile => {
+                tile.addEventListener('click', () => openAlbum(tile.dataset.key));
+            });
+        }
+
+        function openAlbum(key) {
+            currentCategory = key;
+            const cat = categories.find(c => c.key === key);
+
+            document.getElementById('albumGridSection').style.display = 'none';
+            document.getElementById('albumDetailSection').style.display = 'block';
+            document.getElementById('albumDetailTitle').textContent = cat ? cat.label : key;
+            document.getElementById('albumDetailSubtitle').textContent = cat ? (cat.subtitle || '') : '';
+
+            window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
+            renderGallery();
+        }
+
+        function closeAlbum() {
+            currentCategory = null;
+            document.getElementById('albumDetailSection').style.display = 'none';
+            document.getElementById('albumGridSection').style.display = 'block';
+        }
+
+        document.getElementById('backToAlbums').addEventListener('click', closeAlbum);
+
+        // ============================================
+        // RENDER PHOTOS/VIDEOS WITHIN AN ALBUM
         // ============================================
         function renderGallery() {
             const grid = document.getElementById('galleryGrid');
-            const filtered = currentFilter === 'all' 
-                ? allPhotos 
-                : allPhotos.filter(p => p.category === currentFilter);
+            const filtered = allPhotos.filter(p => p.category === currentCategory);
 
             if (filtered.length === 0) {
                 grid.innerHTML = `
                     <div class="empty-state">
-                        <p>No photos in this category yet</p>
+                        <p>No photos in this album yet</p>
                     </div>
                 `;
+                carouselCounter.textContent = '';
                 return;
             }
 
             grid.innerHTML = filtered.map((photo, index) => `
-                <div class="gallery-item" data-index="${index}" data-filter="${photo.category}">
-                    <img
-                        src="${photo.url}"
-                        alt="${photo.caption}"
-                        loading="lazy"
-                        class="gallery-image"
-                    >
+                <div class="gallery-item" data-index="${index}">
+                    ${photo.type === 'video'
+                        ? `<video class="gallery-image" src="${photo.url}" muted loop playsinline autoplay></video>`
+                        : `<img src="${photo.url}" alt="${photo.caption || ''}" loading="lazy" class="gallery-image">`}
                     <div class="gallery-overlay">
-                        <p class="gallery-caption">${photo.caption || 'Air Force Journey'}</p>
+                        <p class="gallery-caption">${photo.caption || ''}</p>
                         ${photo.date ? `<p class="gallery-date">${photo.date}</p>` : ''}
                     </div>
                 </div>
@@ -268,9 +302,23 @@
         const modal = document.getElementById('imageModal');
         const modalClose = document.getElementById('modalClose');
 
+        const modalImage = document.getElementById('modalImage');
+        const modalVideo = document.getElementById('modalVideo');
+
         function openModal(photo) {
-            document.getElementById('modalImage').src = photo.url;
-            document.getElementById('modalCaption').textContent = photo.caption || 'Air Force Journey';
+            if (photo.type === 'video') {
+                modalVideo.src = photo.url;
+                modalVideo.style.display = 'block';
+                modalImage.style.display = 'none';
+                modalImage.src = '';
+            } else {
+                modalImage.src = photo.url;
+                modalImage.style.display = 'block';
+                modalVideo.style.display = 'none';
+                modalVideo.pause();
+                modalVideo.src = '';
+            }
+            document.getElementById('modalCaption').textContent = photo.caption || '';
             document.getElementById('modalDate').textContent = photo.date || '';
             modal.classList.add('show');
             document.body.style.overflow = 'hidden';
@@ -279,6 +327,7 @@
         function closeModal() {
             modal.classList.remove('show');
             document.body.style.overflow = '';
+            modalVideo.pause();
         }
 
         modalClose.addEventListener('click', closeModal);
@@ -290,23 +339,9 @@
         });
 
         // ============================================
-        // FILTERS
-        // ============================================
-        document.querySelectorAll('.filter-tab').forEach(tab => {
-            tab.addEventListener('click', () => {
-                document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
-                currentFilter = tab.dataset.filter;
-                renderGallery();
-            });
-        });
-
-        // ============================================
         // INITIALIZATION
         // ============================================
         document.addEventListener('DOMContentLoaded', loadGallery);
-
-        
     </script>
     
     <!-- Navigation JS -->

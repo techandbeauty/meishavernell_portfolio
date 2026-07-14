@@ -622,19 +622,38 @@
         <!-- Gallery Tab -->
         <div class="tab-content active" id="gallery-tab">
             <div class="content-section">
-                <h2 class="section-title">Upload Gallery Photo</h2>
+                <h2 class="section-title">Albums</h2>
+                <p style="font-size: 0.75rem; color: var(--light-gray); margin-bottom: 12px;">
+                    These are the albums shown on your LookBook page. Add a new one anytime — it'll show up in the Category dropdown below right away.
+                </p>
+                <div class="form-row" style="margin-bottom: 20px;">
+                    <div class="form-group">
+                        <label for="newAlbumName">New Album Name</label>
+                        <input type="text" id="newAlbumName" placeholder="e.g. Travel">
+                    </div>
+                    <div class="form-group">
+                        <label for="newAlbumSubtitle">Subtitle (optional)</label>
+                        <input type="text" id="newAlbumSubtitle" placeholder="e.g. Where I've been">
+                    </div>
+                </div>
+                <button type="button" class="btn secondary" id="addAlbumBtn" style="width: 100%; margin-bottom: 10px;">+ ADD ALBUM</button>
+                <div class="status-message" id="albumStatus"></div>
+            </div>
+
+            <div class="content-section">
+                <h2 class="section-title">Upload Gallery Photo or Video</h2>
                 <form class="upload-form" id="galleryUploadForm">
                     <div class="status-message" id="galleryStatus"></div>
 
                     <div class="form-row full">
                         <div class="form-group">
-                            <label>Photo</label>
+                            <label>Photo or Video</label>
                             <div class="file-input-wrapper">
                                 <label class="file-input-label" for="galleryFile">
                                     <div>📷 Click to upload or drag and drop</div>
                                     <div class="file-name" id="galleryFileName"></div>
                                 </label>
-                                <input type="file" id="galleryFile" accept="image/*" required>
+                                <input type="file" id="galleryFile" accept="image/*,video/*" required>
                             </div>
                         </div>
                     </div>
@@ -645,13 +664,8 @@
                             <input type="text" id="galleryCaption" placeholder="Photo caption">
                         </div>
                         <div class="form-group">
-                            <label for="galleryCategory">Category</label>
-                            <select id="galleryCategory" required>
-                                <option value="lifestyle">Lifestyle - How I live</option>
-                                <option value="repository">Repository - What I build</option>
-                                <option value="service">Service - What I stand for</option>
-                                <option value="milestones">Milestones - How far I've come</option>
-                            </select>
+                            <label for="galleryCategory">Album</label>
+                            <select id="galleryCategory" required></select>
                         </div>
                     </div>
 
@@ -663,7 +677,7 @@
                     </div>
 
                     <div class="btn-group">
-                        <button type="submit" class="btn" id="galleryUploadBtn">UPLOAD PHOTO</button>
+                        <button type="submit" class="btn" id="galleryUploadBtn">UPLOAD</button>
                         <button type="reset" class="btn secondary">CLEAR</button>
                     </div>
                 </form>
@@ -997,7 +1011,7 @@
         function showDashboard() {
             loginContainer.style.display = 'none';
             dashboardContainer.style.display = 'block';
-            loadGalleryPhotos();
+            loadGalleryCategories().then(loadGalleryPhotos);
             loadSiteMedia();
             loadPracticeQuestions();
             loadFlashcards();
@@ -1088,6 +1102,91 @@
         });
 
         // ============================================
+        // GALLERY ALBUMS (categories)
+        // ============================================
+        const DEFAULT_ALBUMS = [
+            { key: 'mei', label: 'Mei', subtitle: 'Who I am' },
+            { key: 'lifestyle', label: 'Lifestyle', subtitle: 'How I live' },
+            { key: 'repository', label: 'Repository', subtitle: 'What I build' },
+            { key: 'service', label: 'Service', subtitle: 'What I stand for' },
+            { key: 'milestones', label: 'Milestones', subtitle: "How far I've come" }
+        ];
+
+        let galleryCategories = [];
+
+        function slugify(str) {
+            return str.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+        }
+
+        async function loadGalleryCategories() {
+            try {
+                const db = firebase.firestore();
+                let snap = await db.collection('galleryCategories').orderBy('order', 'asc').get();
+
+                if (snap.empty) {
+                    // First time - seed the default albums so they show up
+                    // both here and on the live LookBook page.
+                    const batch = db.batch();
+                    DEFAULT_ALBUMS.forEach((album, i) => {
+                        const ref = db.collection('galleryCategories').doc(album.key);
+                        batch.set(ref, { ...album, order: i, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+                    });
+                    await batch.commit();
+                    snap = await db.collection('galleryCategories').orderBy('order', 'asc').get();
+                }
+
+                galleryCategories = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderCategoryOptions();
+            } catch (error) {
+                console.log('Could not load albums:', error.message);
+            }
+        }
+
+        function renderCategoryOptions() {
+            const select = document.getElementById('galleryCategory');
+            const current = select.value;
+            select.innerHTML = galleryCategories.map(cat =>
+                `<option value="${cat.key}">${cat.label}${cat.subtitle ? ' - ' + cat.subtitle : ''}</option>`
+            ).join('');
+            if (current && galleryCategories.some(c => c.key === current)) {
+                select.value = current;
+            }
+        }
+
+        document.getElementById('addAlbumBtn').addEventListener('click', async () => {
+            const nameInput = document.getElementById('newAlbumName');
+            const subtitleInput = document.getElementById('newAlbumSubtitle');
+            const label = nameInput.value.trim();
+
+            if (!label) {
+                showStatus('albumStatus', 'Enter an album name first', 'error');
+                return;
+            }
+
+            const key = slugify(label);
+            if (galleryCategories.some(c => c.key === key)) {
+                showStatus('albumStatus', 'An album with that name already exists', 'error');
+                return;
+            }
+
+            try {
+                await firebase.firestore().collection('galleryCategories').doc(key).set({
+                    key,
+                    label,
+                    subtitle: subtitleInput.value.trim(),
+                    order: galleryCategories.length,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                showStatus('albumStatus', `✓ "${label}" album added`, 'success');
+                nameInput.value = '';
+                subtitleInput.value = '';
+                await loadGalleryCategories();
+            } catch (error) {
+                showStatus('albumStatus', `Error: ${error.message}`, 'error');
+            }
+        });
+
+        // ============================================
         // GALLERY UPLOAD
         // ============================================
         const galleryUploadForm = document.getElementById('galleryUploadForm');
@@ -1101,10 +1200,10 @@
 
         galleryUploadForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            
+
             const file = galleryFile.files[0];
             if (!file) {
-                showStatus('galleryStatus', 'Please select a photo', 'error');
+                showStatus('galleryStatus', 'Please select a photo or video', 'error');
                 return;
             }
 
@@ -1112,6 +1211,7 @@
             const category = document.getElementById('galleryCategory').value;
             const date = document.getElementById('galleryDate').value;
             const uploadBtn = document.getElementById('galleryUploadBtn');
+            const mediaType = file.type.startsWith('video/') ? 'video' : 'image';
 
             uploadBtn.disabled = true;
             uploadBtn.textContent = 'UPLOADING...';
@@ -1123,7 +1223,7 @@
                 formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
                 formData.append('tags', 'mv-gallery-cms');
 
-                const uploadRes = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+                const uploadRes = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${mediaType}/upload`, {
                     method: 'POST',
                     body: formData
                 });
@@ -1133,6 +1233,7 @@
                 // Save to Firestore
                 await firebase.firestore().collection('gallery').add({
                     url: uploadData.secure_url,
+                    type: mediaType,
                     caption: caption,
                     category: category,
                     date: date || new Date().toISOString().split('T')[0],
@@ -1140,7 +1241,7 @@
                     cloudinaryPublicId: uploadData.public_id
                 });
 
-                showStatus('galleryStatus', '✓ Photo uploaded successfully!', 'success');
+                showStatus('galleryStatus', '✓ Uploaded successfully!', 'success');
                 galleryUploadForm.reset();
                 galleryFileName.textContent = '';
                 loadGalleryPhotos();
@@ -1149,7 +1250,7 @@
             }
 
             uploadBtn.disabled = false;
-            uploadBtn.textContent = 'UPLOAD PHOTO';
+            uploadBtn.textContent = 'UPLOAD';
         });
 
         async function loadGalleryPhotos() {
@@ -1171,14 +1272,18 @@
 
                 container.innerHTML = snapshot.docs.map(doc => {
                     const data = doc.data();
+                    const catLabel = (galleryCategories.find(c => c.key === data.category) || {}).label || data.category;
+                    const preview = data.type === 'video'
+                        ? `<video src="${data.url}" muted style="width:100%;height:100%;object-fit:cover;"></video>`
+                        : `<img src="${data.url}" alt="${data.caption || ''}">`;
                     return `
                         <div class="gallery-item-card">
                             <div class="gallery-item-image">
-                                <img src="${data.url}" alt="${data.caption}">
+                                ${preview}
                             </div>
                             <div class="gallery-item-info">
                                 <div class="gallery-item-caption">${data.caption || 'Untitled'}</div>
-                                <div class="gallery-item-category">${data.category}</div>
+                                <div class="gallery-item-category">${catLabel}</div>
                                 <button type="button" class="gallery-item-delete" onclick="deleteGalleryPhoto('${doc.id}')">
                                     DELETE
                                 </button>
