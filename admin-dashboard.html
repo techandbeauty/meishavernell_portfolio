@@ -184,12 +184,51 @@
             color: var(--black);
         }
 
+        .back-to-site {
+            display: inline-block;
+            color: var(--light-gray);
+            font-size: 0.8rem;
+            text-decoration: none;
+            border: 1px solid var(--mid-gray);
+            padding: 8px 16px;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .back-to-site:hover {
+            color: var(--gold);
+            border-color: var(--gold);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .login-back-link {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: var(--light-gray);
+            font-size: 0.8rem;
+            text-decoration: underline;
+        }
+
+        .login-back-link:hover {
+            color: var(--gold);
+        }
+
         /* Tabs */
         .dashboard-tabs {
             display: flex;
             border-bottom: 1px solid var(--mid-gray);
             padding: 0 40px;
             gap: 40px;
+        }
+
+        .mobile-tab-select {
+            display: none;
         }
 
         .tab-btn {
@@ -484,13 +523,30 @@
             }
 
             .dashboard-tabs {
-                padding: 0 20px;
-                gap: 20px;
-                overflow-x: auto;
+                display: none;
+            }
+
+            .mobile-tab-select {
+                display: block;
+                width: calc(100% - 40px);
+                margin: 15px 20px;
+                padding: 12px;
+                background: var(--black);
+                border: 1px solid var(--gold);
+                color: var(--white);
+                font-family: 'Montserrat', sans-serif;
+                font-size: 0.9rem;
+                text-transform: uppercase;
+                letter-spacing: 0.1rem;
             }
 
             .tab-content {
                 padding: 20px;
+            }
+
+            .header-actions {
+                width: 100%;
+                justify-content: space-between;
             }
 
             .form-row {
@@ -529,6 +585,7 @@
             <p style="text-align: center; margin-top: 16px;">
                 <a href="#" id="forgotPasswordLink" style="color: var(--light-gray); font-size: 0.75rem; text-decoration: underline;">Forgot password?</a>
             </p>
+            <a href="index.html" class="login-back-link">← Back to Site</a>
         </div>
     </div>
 
@@ -536,10 +593,13 @@
     <div class="dashboard-container" id="dashboardContainer">
         <div class="dashboard-header">
             <h1 class="dashboard-title">DASHBOARD</h1>
-            <button class="logout-btn" id="logoutBtn">LOGOUT</button>
+            <div class="header-actions">
+                <a href="index.html" class="back-to-site">← Back to Site</a>
+                <button class="logout-btn" id="logoutBtn">LOGOUT</button>
+            </div>
         </div>
 
-        <!-- Tabs -->
+        <!-- Tabs (desktop) -->
         <div class="dashboard-tabs">
             <button class="tab-btn active" data-tab="gallery">Gallery</button>
             <button class="tab-btn" data-tab="sitephotos">Site Photos</button>
@@ -548,6 +608,16 @@
             <button class="tab-btn" data-tab="notes">Study Notes</button>
             <button class="tab-btn" data-tab="sessions">Live Sessions</button>
         </div>
+
+        <!-- Tabs (mobile dropdown) -->
+        <select class="mobile-tab-select" id="mobileTabSelect">
+            <option value="gallery">Gallery</option>
+            <option value="sitephotos">Site Photos</option>
+            <option value="practice">Practice Tests</option>
+            <option value="flashcards">Flashcards</option>
+            <option value="notes">Study Notes</option>
+            <option value="sessions">Live Sessions</option>
+        </select>
 
         <!-- Gallery Tab -->
         <div class="tab-content active" id="gallery-tab">
@@ -987,16 +1057,26 @@
         // ============================================
         // TAB SWITCHING
         // ============================================
+        function activateTab(tabName) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+
+            const btn = document.querySelector(`.tab-btn[data-tab="${tabName}"]`);
+            if (btn) btn.classList.add('active');
+
+            const content = document.getElementById(`${tabName}-tab`);
+            if (content) content.classList.add('active');
+
+            const mobileSelect = document.getElementById('mobileTabSelect');
+            if (mobileSelect) mobileSelect.value = tabName;
+        }
+
         document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const tabName = btn.dataset.tab;
-                
-                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-                document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-                
-                btn.classList.add('active');
-                document.getElementById(`${tabName}-tab`).classList.add('active');
-            });
+            btn.addEventListener('click', () => activateTab(btn.dataset.tab));
+        });
+
+        document.getElementById('mobileTabSelect').addEventListener('change', (e) => {
+            activateTab(e.target.value);
         });
 
         // ============================================
