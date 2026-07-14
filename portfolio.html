@@ -8,9 +8,13 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Bebas+Neue&family=Montserrat:wght@200;300;400;500&display=swap" rel="stylesheet">
     
+    <!-- Firebase (used only to check for admin-hidden photos) -->
+    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore-compat.js"></script>
+
     <!-- Global Styles -->
     <link rel="stylesheet" href="main.css">
-    
+
     <!-- Page Styles -->
     <link rel="stylesheet" href="portfolio.css">
 </head>
@@ -104,6 +108,9 @@
         </div>
     </div>
 
+    <!-- Firebase Config -->
+    <script src="firebase-config.js"></script>
+
     <script>
         // ============================================
         // CLOUDINARY CONFIGURATION
@@ -196,6 +203,18 @@
         let defaultImageUrl = FALLBACK_IMAGE;
         let allProjects = [];
 
+        // Photos/videos the admin has hidden from admin-dashboard.html.
+        async function getHiddenPublicIds() {
+            try {
+                const db = firebase.firestore();
+                const snap = await db.collection('hiddenMedia').get();
+                return new Set(snap.docs.map(doc => doc.data().publicId));
+            } catch (e) {
+                console.log('Could not load hidden media list:', e.message);
+                return new Set();
+            }
+        }
+
         // ============================================
         // LOAD FROM CLOUDINARY
         // ============================================
@@ -205,6 +224,7 @@
 
             let cloudinaryMedia = [];
             let githubProjects = [];
+            const hiddenIds = await getHiddenPublicIds();
 
             // Load from Cloudinary
             try {
@@ -212,12 +232,13 @@
                 const imgRes = await fetch(`https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/list/${CLOUDINARY_PORTFOLIO_TAG}.json?_=${Date.now()}`);
                 if (imgRes.ok) {
                     const imgData = await imgRes.json();
-                    if (imgData.resources && imgData.resources.length > 0) {
+                    const visibleImages = (imgData.resources || []).filter(r => !hiddenIds.has(r.public_id));
+                    if (visibleImages.length > 0) {
                         // Set first image as default
-                        const firstImg = imgData.resources[0];
+                        const firstImg = visibleImages[0];
                         defaultImageUrl = `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload/c_fill,g_auto,w_800,h_800,q_auto,f_auto/${firstImg.public_id}.${firstImg.format}`;
 
-                        cloudinaryMedia = cloudinaryMedia.concat(imgData.resources.map(r => ({
+                        cloudinaryMedia = cloudinaryMedia.concat(visibleImages.map(r => ({
                             type: 'image',
                             publicId: r.public_id,
                             format: r.format,
@@ -231,8 +252,9 @@
                 const vidRes = await fetch(`https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/video/list/${CLOUDINARY_PORTFOLIO_TAG}.json?_=${Date.now()}`);
                 if (vidRes.ok) {
                     const vidData = await vidRes.json();
-                    if (vidData.resources) {
-                        cloudinaryMedia = cloudinaryMedia.concat(vidData.resources.map(r => ({
+                    const visibleVideos = (vidData.resources || []).filter(r => !hiddenIds.has(r.public_id));
+                    if (visibleVideos.length > 0) {
+                        cloudinaryMedia = cloudinaryMedia.concat(visibleVideos.map(r => ({
                             type: 'video',
                             publicId: r.public_id,
                             format: r.format,

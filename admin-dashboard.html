@@ -10,11 +10,11 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700&family=Bebas+Neue&family=Montserrat:wght@200;300;400;500;600&display=swap" rel="stylesheet">
     
-    <!-- Firebase -->
+    <!-- Firebase (Storage no longer used - all media now goes through
+         Cloudinary, which doesn't require Firebase's paid Blaze plan) -->
     <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-storage-compat.js"></script>
     
     <style>
         :root {
@@ -735,12 +735,20 @@
             </div>
 
             <div class="content-section">
-                <h2 class="section-title">Currently Live (read-only preview)</h2>
+                <h2 class="section-title">Currently Live</h2>
                 <p style="font-size: 0.75rem; color: var(--light-gray); margin-bottom: 12px;">
-                    To remove or reorganize a photo, do it in your Cloudinary Media Library directly — this dashboard can only add photos, not delete them.
+                    Hit "Hide" to instantly pull a photo off your live site. Hidden photos stay in your Cloudinary account and can be restored anytime from the Hidden Photos section below.
                 </p>
                 <div class="loading" id="siteMediaLoading">Loading...</div>
                 <div id="siteMediaItems"></div>
+            </div>
+
+            <div class="content-section">
+                <h2 class="section-title">Hidden Photos</h2>
+                <p style="font-size: 0.75rem; color: var(--light-gray); margin-bottom: 12px;">
+                    Hidden from your live site. Tap "Restore" to bring one back.
+                </p>
+                <div id="hiddenMediaItems"></div>
             </div>
         </div>
 
@@ -1109,20 +1117,27 @@
             uploadBtn.textContent = 'UPLOADING...';
 
             try {
-                // Upload to Firebase Storage
-                const timestamp = Date.now();
-                const storageRef = firebase.storage().ref(`gallery/${timestamp}-${file.name}`);
-                const snapshot = await storageRef.put(file);
-                const photoUrl = await snapshot.ref.getDownloadURL();
+                // Upload to Cloudinary
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+                formData.append('tags', 'mv-gallery-cms');
+
+                const uploadRes = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+                    method: 'POST',
+                    body: formData
+                });
+                const uploadData = await uploadRes.json();
+                if (!uploadRes.ok) throw new Error(uploadData.error?.message || 'Upload failed');
 
                 // Save to Firestore
                 await firebase.firestore().collection('gallery').add({
-                    url: photoUrl,
+                    url: uploadData.secure_url,
                     caption: caption,
                     category: category,
                     date: date || new Date().toISOString().split('T')[0],
                     uploadedAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    storagePath: `gallery/${timestamp}-${file.name}`
+                    cloudinaryPublicId: uploadData.public_id
                 });
 
                 showStatus('galleryStatus', '✓ Photo uploaded successfully!', 'success');
@@ -1164,7 +1179,7 @@
                             <div class="gallery-item-info">
                                 <div class="gallery-item-caption">${data.caption || 'Untitled'}</div>
                                 <div class="gallery-item-category">${data.category}</div>
-                                <button type="button" class="gallery-item-delete" onclick="deleteGalleryPhoto('${doc.id}', '${data.storagePath}')">
+                                <button type="button" class="gallery-item-delete" onclick="deleteGalleryPhoto('${doc.id}')">
                                     DELETE
                                 </button>
                             </div>
@@ -1176,13 +1191,10 @@
             }
         }
 
-        async function deleteGalleryPhoto(docId, storagePath) {
-            if (!confirm('Delete this photo?')) return;
+        async function deleteGalleryPhoto(docId) {
+            if (!confirm('Delete this photo? It will disappear from your LookBook immediately.')) return;
 
             try {
-                // Delete from Storage
-                await firebase.storage().ref(storagePath).delete();
-                // Delete from Firestore
                 await firebase.firestore().collection('gallery').doc(docId).delete();
                 loadGalleryPhotos();
                 showStatus('galleryStatus', '✓ Photo deleted', 'success');
@@ -1281,13 +1293,46 @@
             uploadBtn.textContent = 'UPLOAD';
         });
 
+        function hiddenDocId(publicId) {
+            return publicId.replace(/\//g, '_');
+        }
+
+        async function hideMedia(publicId, tag, type, url) {
+            if (!confirm('Hide this from your live site? You can restore it anytime from the Hidden Photos section below.')) return;
+            try {
+                await firebase.firestore().collection('hiddenMedia').doc(hiddenDocId(publicId)).set({
+                    publicId, tag, type, url,
+                    hiddenAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                showStatus('siteMediaStatus', '✓ Hidden from site', 'success');
+                loadSiteMedia();
+            } catch (error) {
+                showStatus('siteMediaStatus', `Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function unhideMedia(docId) {
+            try {
+                await firebase.firestore().collection('hiddenMedia').doc(docId).delete();
+                showStatus('siteMediaStatus', '✓ Restored to site', 'success');
+                loadSiteMedia();
+            } catch (error) {
+                showStatus('siteMediaStatus', `Error: ${error.message}`, 'error');
+            }
+        }
+
         async function loadSiteMedia() {
             const container = document.getElementById('siteMediaItems');
             const loading = document.getElementById('siteMediaLoading');
+            const hiddenContainer = document.getElementById('hiddenMediaItems');
             loading.style.display = 'block';
             container.innerHTML = '';
 
             try {
+                const hiddenSnap = await firebase.firestore().collection('hiddenMedia').get();
+                const hiddenDocs = hiddenSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                const hiddenIds = new Set(hiddenDocs.map(d => d.publicId));
+
                 const sections = await Promise.all(Object.values(SITE_DESTINATIONS).map(async (dest) => {
                     const items = [];
                     const fetches = [];
@@ -1296,10 +1341,15 @@
                         fetches.push(
                             fetch(`https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/list/${dest.tag}.json?_=${Date.now()}`)
                                 .then(r => r.ok ? r.json() : { resources: [] })
-                                .then(d => (d.resources || []).forEach(r => items.push({
-                                    type: 'image',
-                                    url: `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload/q_auto,f_auto/${r.public_id}.${r.format}`
-                                })))
+                                .then(d => (d.resources || []).forEach(r => {
+                                    if (hiddenIds.has(r.public_id)) return;
+                                    items.push({
+                                        type: 'image',
+                                        publicId: r.public_id,
+                                        tag: dest.tag,
+                                        url: `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload/q_auto,f_auto/${r.public_id}.${r.format}`
+                                    });
+                                }))
                                 .catch(() => {})
                         );
                     }
@@ -1307,10 +1357,15 @@
                         fetches.push(
                             fetch(`https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/video/list/${dest.tag}.json?_=${Date.now()}`)
                                 .then(r => r.ok ? r.json() : { resources: [] })
-                                .then(d => (d.resources || []).forEach(r => items.push({
-                                    type: 'video',
-                                    url: `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/video/upload/q_auto/${r.public_id}.${r.format}`
-                                })))
+                                .then(d => (d.resources || []).forEach(r => {
+                                    if (hiddenIds.has(r.public_id)) return;
+                                    items.push({
+                                        type: 'video',
+                                        publicId: r.public_id,
+                                        tag: dest.tag,
+                                        url: `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/video/upload/q_auto/${r.public_id}.${r.format}`
+                                    });
+                                }))
                                 .catch(() => {})
                         );
                     }
@@ -1330,11 +1385,23 @@
                             ${item.type === 'video'
                                 ? `<video src="${item.url}" muted style="width:100%;aspect-ratio:1;object-fit:cover;"></video>`
                                 : `<img src="${item.url}" style="width:100%;aspect-ratio:1;object-fit:cover;">`}
+                            <button onclick="hideMedia('${item.publicId}', '${item.tag}', '${item.type}', '${item.url}')" style="width:100%; margin-top:8px; background: transparent; border: 1px solid var(--mid-gray); color: #fca5a5; padding: 6px; cursor: pointer; font-size: 0.7rem;">HIDE</button>
                         </div>
                     `).join('') + '</div>';
                 });
 
                 container.innerHTML = html || '<p style="text-align: center; color: var(--light-gray);">No site photos uploaded yet.</p>';
+
+                hiddenContainer.innerHTML = hiddenDocs.length === 0
+                    ? '<p style="text-align: center; color: var(--light-gray);">Nothing hidden right now.</p>'
+                    : '<div class="gallery-items">' + hiddenDocs.map(item => `
+                        <div style="background: var(--dark-gray); border: 1px solid var(--mid-gray); padding: 10px;">
+                            ${item.type === 'video'
+                                ? `<video src="${item.url}" muted style="width:100%;aspect-ratio:1;object-fit:cover;"></video>`
+                                : `<img src="${item.url}" style="width:100%;aspect-ratio:1;object-fit:cover;">`}
+                            <button onclick="unhideMedia('${item.id}')" style="width:100%; margin-top:8px; background: transparent; border: 1px solid var(--gold); color: var(--gold); padding: 6px; cursor: pointer; font-size: 0.7rem;">RESTORE</button>
+                        </div>
+                    `).join('') + '</div>';
             } catch (error) {
                 loading.style.display = 'none';
                 container.innerHTML = `<p style="color: #fca5a5;">Error loading site photos: ${error.message}</p>`;
@@ -1505,11 +1572,25 @@
                 let fileType = '';
                 const file = noteFile.files[0];
                 if (file) {
-                    const timestamp = Date.now();
-                    const storageRef = firebase.storage().ref(`studyNotes/${timestamp}-${file.name}`);
-                    const snapshot = await storageRef.put(file);
-                    fileUrl = await snapshot.ref.getDownloadURL();
-                    fileType = file.type.startsWith('image/') ? 'image' : 'document';
+                    const isImage = file.type.startsWith('image/');
+                    fileType = isImage ? 'image' : 'document';
+
+                    // Images upload as Cloudinary "image" resources; PDFs/docs
+                    // upload as "raw" resources (Cloudinary hosts any file
+                    // type as raw, just without image processing).
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+                    formData.append('tags', 'mv-study-notes');
+
+                    const resourceType = isImage ? 'image' : 'raw';
+                    const uploadRes = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/${resourceType}/upload`, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const uploadData = await uploadRes.json();
+                    if (!uploadRes.ok) throw new Error(uploadData.error?.message || 'Upload failed');
+                    fileUrl = uploadData.secure_url;
                 }
 
                 await firebase.firestore().collection('studyNotes').add({

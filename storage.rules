@@ -1,7 +1,14 @@
 rules_version = '2';
 
 // Firebase Storage Security Rules for meishavernell-site
-// Paste this into: Firebase Console -> Storage -> Rules
+//
+// NOT CURRENTLY NEEDED. As of this version, nothing on the site uses
+// Firebase Storage anymore - the Gallery, Site Photos, and Study Notes
+// uploads all go through Cloudinary instead, specifically so you don't
+// need Firebase's paid Blaze plan (which Storage now requires just to
+// turn on). You can safely ignore the Storage section of the Firebase
+// Console. Keeping this file around only in case you ever want to
+// re-enable Storage in the future.
 //
 // >>> Use the SAME admin email you put in firestore.rules <<<
 

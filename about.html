@@ -8,6 +8,10 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Bebas+Neue&family=Montserrat:wght@200;300;400;500;600&display=swap" rel="stylesheet">
 
+    <!-- Firebase (used only to check for admin-hidden photos) -->
+    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore-compat.js"></script>
+
     <!-- Global Styles -->
     <link rel="stylesheet" href="main.css">
 
@@ -325,18 +329,36 @@
         <p class="footer-text">© 2027 MEISHA VERNELL. ALL RIGHTS RESERVED.</p>
     </footer>
 
+    <!-- Firebase Config -->
+    <script src="firebase-config.js"></script>
+
     <script>
         const CLOUDINARY_CLOUD_NAME = 'didqb05ko';
 
+        // Photos the admin has hidden from admin-dashboard.html.
+        async function getHiddenPublicIds() {
+            try {
+                const db = firebase.firestore();
+                const snap = await db.collection('hiddenMedia').get();
+                return new Set(snap.docs.map(doc => doc.data().publicId));
+            } catch (e) {
+                console.log('Could not load hidden media list:', e.message);
+                return new Set();
+            }
+        }
+
         // Load images from Cloudinary by tag
         async function loadAboutImages() {
+            const hiddenIds = await getHiddenPublicIds();
+
             // Load Creator image (tagged: mv-about-creator)
             try {
                 const creatorRes = await fetch(`https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/list/mv-about-creator.json?_=${Date.now()}`);
                 if (creatorRes.ok) {
                     const data = await creatorRes.json();
-                    if (data.resources && data.resources.length > 0) {
-                        const img = data.resources[0];
+                    const visible = (data.resources || []).filter(r => !hiddenIds.has(r.public_id));
+                    if (visible.length > 0) {
+                        const img = visible[0];
                         document.getElementById('creatorImage').src =
                             `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload/q_auto,f_auto/${img.public_id}.${img.format}`;
                     }
@@ -348,8 +370,9 @@
                 const engineerRes = await fetch(`https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/list/mv-about-engineer.json?_=${Date.now()}`);
                 if (engineerRes.ok) {
                     const data = await engineerRes.json();
-                    if (data.resources && data.resources.length > 0) {
-                        const img = data.resources[0];
+                    const visible = (data.resources || []).filter(r => !hiddenIds.has(r.public_id));
+                    if (visible.length > 0) {
+                        const img = visible[0];
                         document.getElementById('engineerImage').src =
                             `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload/q_auto,f_auto/${img.public_id}.${img.format}`;
                     }

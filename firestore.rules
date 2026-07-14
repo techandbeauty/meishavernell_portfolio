@@ -52,6 +52,15 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Cloudinary photos/videos the admin has "hidden" from the live site.
+    // Doc ID is the Cloudinary public_id (slashes replaced with
+    // underscores). Public read so every page's loader can filter hidden
+    // items out; only admin can hide/unhide.
+    match /hiddenMedia/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     match /contacts/{docId} {
       // Public can submit/update their own signup by hitting the
       // email-keyed doc ID. No read/list, so nobody can enumerate emails.

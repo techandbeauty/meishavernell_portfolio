@@ -253,6 +253,19 @@
             { type: 'image', url: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=1920&q=80' }
         ];
 
+        // Photos/videos the admin has hidden from admin-dashboard.html -
+        // filtered out of every Cloudinary tag lookup on this page.
+        async function getHiddenPublicIds() {
+            try {
+                const db = firebase.firestore();
+                const snap = await db.collection('hiddenMedia').get();
+                return new Set(snap.docs.map(doc => doc.data().publicId));
+            } catch (e) {
+                console.log('Could not load hidden media list:', e.message);
+                return new Set();
+            }
+        }
+
         // ============================================
         // LOAD GALLERY FROM CLOUDINARY (Using Tags)
         // ============================================
@@ -260,6 +273,8 @@
             let mediaList = [];
 
             try {
+                const hiddenIds = await getHiddenPublicIds();
+
                 // Fetch IMAGES with the specified tag
                 const imageResponse = await fetch(
                     `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/list/${CLOUDINARY_TAG}.json?_=${Date.now()}`
@@ -268,11 +283,13 @@
                 if (imageResponse.ok) {
                     const imageData = await imageResponse.json();
                     if (imageData.resources && imageData.resources.length > 0) {
-                        const images = imageData.resources.map(resource => ({
-                            type: 'image',
-                            // Smart crop with face detection for best display
-                            url: `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload/c_fill,g_auto,w_1920,h_1080,q_auto,f_auto/${resource.public_id}.${resource.format}`
-                        }));
+                        const images = imageData.resources
+                            .filter(resource => !hiddenIds.has(resource.public_id))
+                            .map(resource => ({
+                                type: 'image',
+                                // Smart crop with face detection for best display
+                                url: `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload/c_fill,g_auto,w_1920,h_1080,q_auto,f_auto/${resource.public_id}.${resource.format}`
+                            }));
                         mediaList = mediaList.concat(images);
                     }
                 }
@@ -285,11 +302,13 @@
                 if (videoResponse.ok) {
                     const videoData = await videoResponse.json();
                     if (videoData.resources && videoData.resources.length > 0) {
-                        const videos = videoData.resources.map(resource => ({
-                            type: 'video',
-                            // Videos optimized for display
-                            url: `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/video/upload/c_fill,w_1920,h_1080,q_auto/${resource.public_id}.${resource.format}`
-                        }));
+                        const videos = videoData.resources
+                            .filter(resource => !hiddenIds.has(resource.public_id))
+                            .map(resource => ({
+                                type: 'video',
+                                // Videos optimized for display
+                                url: `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/video/upload/c_fill,w_1920,h_1080,q_auto/${resource.public_id}.${resource.format}`
+                            }));
                         mediaList = mediaList.concat(videos);
                     }
                 }
@@ -394,8 +413,11 @@
                     const data = await response.json();
                     console.log('Cloudinary data:', data);
 
-                    if (data.resources && data.resources.length > 0) {
-                        const video = data.resources[0]; // Use first video with this tag
+                    const hiddenIds = await getHiddenPublicIds();
+                    const visibleResources = (data.resources || []).filter(r => !hiddenIds.has(r.public_id));
+
+                    if (visibleResources.length > 0) {
+                        const video = visibleResources[0]; // Use first non-hidden video with this tag
                         console.log('Found video:', video.public_id, video.format);
 
                         introVideoUrl = `https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/video/upload/q_auto/${video.public_id}.${video.format}`;
