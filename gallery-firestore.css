@@ -1,5 +1,5 @@
 /* ============================================
-   GALLERY PAGE (Firestore) - Air Force Journey
+   GALLERY PAGE (Firestore) - The LookBook
    ============================================ */
 
 :root {
@@ -14,7 +14,7 @@
 
 /* Gallery Header */
 .gallery-header {
-    padding: 120px 40px 60px;
+    padding: 120px 40px 50px;
     text-align: center;
     max-width: 800px;
     margin: 0 auto;
@@ -38,7 +38,7 @@
 
 /* Filter Section */
 .filter-section {
-    padding: 40px 20px;
+    padding: 0 20px 40px;
     display: flex;
     justify-content: center;
 }
@@ -95,156 +95,18 @@
     color: var(--light-gray);
 }
 
-/* Album Grid (Instagram-profile-style) */
-.album-grid-section {
-    padding: 20px 40px 60px;
-    max-width: 1000px;
-    margin: 0 auto;
-}
-
-.album-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 4px;
-}
-
-.album-tile {
-    position: relative;
-    aspect-ratio: 1 / 1;
-    overflow: hidden;
-    cursor: pointer;
-    background: var(--dark-gray);
-    border: 1px solid var(--mid-gray);
-}
-
-.album-tile-image {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.4s ease, filter 0.3s ease;
-}
-
-.album-tile-empty {
-    background: var(--dark-gray);
-}
-
-.album-tile:hover .album-tile-image {
-    transform: scale(1.05);
-    filter: brightness(0.6);
-}
-
-.album-tile-overlay {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    background: linear-gradient(to top, rgba(0, 0, 0, 0.75) 0%, rgba(0, 0, 0, 0.15) 55%, rgba(0, 0, 0, 0.35) 100%);
-    padding: 10px;
-}
-
-.album-tile-title {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 1.2rem;
-    letter-spacing: 0.15rem;
-    color: var(--white);
-    text-transform: uppercase;
-}
-
-.album-tile-subtitle {
-    font-family: 'Cormorant Garamond', serif;
-    font-style: italic;
-    font-size: 0.75rem;
-    color: var(--gold);
-    margin-top: 4px;
-}
-
-.album-tile-count {
-    font-size: 0.62rem;
-    letter-spacing: 0.1rem;
-    color: var(--light-gray);
-    margin-top: 8px;
-    text-transform: uppercase;
-}
-
-/* Album Detail View */
-.album-detail-section {
-    padding: 20px 40px 60px;
-    max-width: 1400px;
-    margin: 0 auto;
-}
-
-.back-to-albums {
-    display: inline-block;
-    background: transparent;
-    border: 1px solid var(--mid-gray);
-    color: var(--light-gray);
-    padding: 8px 18px;
-    font-size: 0.75rem;
-    letter-spacing: 0.1rem;
-    text-transform: uppercase;
-    cursor: pointer;
-    margin: 0 0 20px;
-    transition: all 0.3s ease;
-}
-
-.back-to-albums:hover {
-    border-color: var(--gold);
-    color: var(--gold);
-}
-
-.album-detail-header {
-    text-align: center;
-    padding: 0 0 20px;
-}
-
-.album-detail-title {
-    font-family: 'Cormorant Garamond', serif;
-    font-size: 2rem;
-    letter-spacing: 0.2rem;
-    color: var(--white);
-}
-
-.album-detail-subtitle {
-    font-family: 'Montserrat', sans-serif;
-    font-size: 0.8rem;
-    letter-spacing: 0.1rem;
-    color: var(--gold);
-    text-transform: uppercase;
-    margin-top: 6px;
-}
-
-/* Gallery Section */
+/* Gallery Section - full-bleed, edge to edge like a Beyonce.com photo page */
 .gallery-section {
-    padding: 40px;
-    max-width: 1400px;
-    margin: 0 auto;
+    padding: 0 4px 4px;
+    width: 100%;
 }
 
-/* Carousel wrapper - holds the arrows either side of the scroller */
-.carousel-wrap {
-    position: relative;
-    display: flex;
-    align-items: center;
-}
-
-/* Gallery Carousel - Vogue Lookbook Style: swipe/scroll through
-   full-bleed portrait cards, one (or a peek of the next) at a time */
+/* Full-width masonry grid - photos keep their real proportions, nothing
+   is ever cropped. Pure-CSS column layout: items flow down each column
+   and wrap, like Pinterest. */
 .gallery-grid {
-    display: flex;
-    gap: 24px;
-    overflow-x: auto;
-    scroll-snap-type: x mandatory;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    padding: 10px 0;
-    scroll-padding-left: 50%;
-}
-
-.gallery-grid::-webkit-scrollbar {
-    display: none;
+    columns: 3 340px;
+    column-gap: 4px;
 }
 
 .gallery-item {
@@ -252,68 +114,23 @@
     overflow: hidden;
     cursor: pointer;
     background: var(--dark-gray);
-    border: 1px solid var(--mid-gray);
-    transition: border-color 0.3s ease;
-    flex: 0 0 auto;
-    scroll-snap-align: center;
-    width: min(420px, 72vw);
-    aspect-ratio: 3 / 4;
-}
-
-.gallery-item:hover {
-    border-color: var(--gold);
+    display: inline-block;
+    width: 100%;
+    margin-bottom: 4px;
+    break-inside: avoid;
+    -webkit-column-break-inside: avoid;
 }
 
 .gallery-image {
     width: 100%;
-    height: 100%;
-    object-fit: cover;
+    height: auto;
+    display: block;
     transition: transform 0.5s ease, filter 0.3s ease;
 }
 
 .gallery-item:hover .gallery-image {
-    transform: scale(1.05);
-    filter: brightness(0.7);
-}
-
-/* Prev/Next arrows */
-.carousel-arrow {
-    flex-shrink: 0;
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    background: rgba(10, 10, 10, 0.7);
-    border: 1px solid var(--mid-gray);
-    color: var(--white);
-    font-size: 1.4rem;
-    line-height: 1;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 5;
-    transition: all 0.3s ease;
-}
-
-.carousel-arrow:hover {
-    border-color: var(--gold);
-    color: var(--gold);
-}
-
-.carousel-arrow-prev {
-    margin-right: -22px;
-}
-
-.carousel-arrow-next {
-    margin-left: -22px;
-}
-
-.carousel-counter {
-    text-align: center;
-    margin-top: 20px;
-    font-size: 0.7rem;
-    letter-spacing: 0.15rem;
-    color: var(--light-gray);
+    transform: scale(1.03);
+    filter: brightness(0.75);
 }
 
 /* Gallery Overlay - caption sits in a gradient at the bottom of each
@@ -330,6 +147,12 @@
     justify-content: flex-end;
     text-align: center;
     padding: 40px 20px 20px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.gallery-item:hover .gallery-overlay {
+    opacity: 1;
 }
 
 .gallery-caption {
@@ -446,15 +269,9 @@
 }
 
 /* Responsive */
-@media (max-width: 1024px) {
-    .gallery-item {
-        width: min(360px, 75vw);
-    }
-}
-
 @media (max-width: 768px) {
     .gallery-header {
-        padding: 100px 20px 40px;
+        padding: 100px 20px 30px;
     }
 
     .gallery-title {
@@ -464,22 +281,6 @@
 
     .gallery-subtitle {
         font-size: 0.8rem;
-    }
-
-    .gallery-section {
-        padding: 30px 15px;
-    }
-
-    .gallery-item {
-        width: 82vw;
-    }
-
-    .gallery-grid {
-        gap: 16px;
-    }
-
-    .carousel-arrow {
-        display: none;
     }
 
     .filter-tabs {
@@ -499,46 +300,28 @@
         font-size: 0.62rem;
     }
 
-    .album-grid-section {
-        padding: 10px 8px 40px;
+    /* Full-bleed single column, edge to edge, no cropping */
+    .gallery-section {
+        padding: 0 2px 2px;
     }
 
-    .album-grid {
-        gap: 2px;
+    .gallery-grid {
+        columns: 1;
+        column-gap: 2px;
     }
 
-    .album-tile-title {
-        font-size: 0.9rem;
+    .gallery-item {
+        margin-bottom: 2px;
     }
 
-    .album-tile-subtitle {
-        font-size: 0.62rem;
-    }
-
-    .album-tile-count {
-        font-size: 0.55rem;
-    }
-
-    .album-detail-section {
-        padding: 15px 15px 40px;
-    }
-
-    .back-to-albums {
-        margin: 0 0 15px;
-    }
-
-    .album-detail-title {
-        font-size: 1.5rem;
+    .gallery-overlay {
+        opacity: 1;
     }
 }
 
 @media (max-width: 480px) {
     .gallery-title {
         font-size: 2rem;
-    }
-
-    .gallery-item {
-        width: 88vw;
     }
 
     .modal-image-container {

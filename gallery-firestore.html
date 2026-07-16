@@ -49,28 +49,18 @@
         <p class="gallery-subtitle"> Moving Forward: Life Behind the Code </p>
     </header>
 
-    <!-- Album Grid (Instagram-style) - tap an album to see its photos/videos -->
-    <section class="album-grid-section" id="albumGridSection">
-        <div class="album-grid" id="albumGrid">
+    <!-- Filter Tabs - built dynamically from your albums -->
+    <div class="filter-section">
+        <div class="filter-tabs" id="filterTabs">
             <div class="loading">Loading albums...</div>
         </div>
-    </section>
+    </div>
 
-    <!-- Album Detail View -->
-    <section class="album-detail-section" id="albumDetailSection" style="display: none;">
-        <button class="back-to-albums" id="backToAlbums">← All Albums</button>
-        <div class="album-detail-header">
-            <h2 class="album-detail-title" id="albumDetailTitle"></h2>
-            <p class="album-detail-subtitle" id="albumDetailSubtitle"></p>
+    <!-- Full-width Photo/Video Grid - scroll to see everything -->
+    <section class="gallery-section">
+        <div class="gallery-grid" id="galleryGrid">
+            <div class="loading">Loading gallery...</div>
         </div>
-        <div class="carousel-wrap">
-            <button class="carousel-arrow carousel-arrow-prev" id="carouselPrev" aria-label="Previous photo">‹</button>
-            <div class="gallery-grid" id="galleryGrid">
-                <div class="loading">Loading...</div>
-            </div>
-            <button class="carousel-arrow carousel-arrow-next" id="carouselNext" aria-label="Next photo">›</button>
-        </div>
-        <div class="carousel-counter" id="carouselCounter"></div>
     </section>
 
     <!-- Image/Video Modal -->
@@ -98,13 +88,13 @@
     <script>
         let allPhotos = [];
         let categories = [];
-        let currentCategory = null;
+        let currentFilter = 'all';
 
         // ============================================
         // LOAD GALLERY + ALBUMS FROM FIRESTORE
         // ============================================
         async function loadGallery() {
-            const grid = document.getElementById('albumGrid');
+            const grid = document.getElementById('galleryGrid');
 
             try {
                 const db = firebase.firestore();
@@ -116,19 +106,8 @@
                 allPhotos = gallerySnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 categories = catSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-                if (categories.length === 0) {
-                    grid.innerHTML = `
-                        <div class="empty-state">
-                            <p>Gallery coming soon!</p>
-                            <p style="font-size: 0.8rem; color: var(--light-gray); margin-top: 10px;">
-                                Start uploading photos from the admin dashboard.
-                            </p>
-                        </div>
-                    `;
-                    return;
-                }
-
-                renderAlbumGrid();
+                renderFilterTabs();
+                renderGallery();
             } catch (error) {
                 console.error('Error loading gallery:', error);
                 grid.innerHTML = '<div class="empty-state"><p>Error loading gallery</p></div>';
@@ -136,71 +115,58 @@
         }
 
         // ============================================
-        // ALBUM GRID (Instagram-style)
+        // FILTER TABS (dynamic - "All" + every album)
         // ============================================
-        function renderAlbumGrid() {
-            const grid = document.getElementById('albumGrid');
+        function renderFilterTabs() {
+            const tabs = document.getElementById('filterTabs');
 
-            grid.innerHTML = categories.map(cat => {
-                const photosInCat = allPhotos.filter(p => p.category === cat.key);
-                const cover = photosInCat[0];
-                const count = photosInCat.length;
-                return `
-                    <div class="album-tile" data-key="${cat.key}">
-                        ${cover
-                            ? (cover.type === 'video'
-                                ? `<video class="album-tile-image" src="${cover.url}" muted loop autoplay playsinline></video>`
-                                : `<img class="album-tile-image" src="${cover.url}" alt="${cat.label}" loading="lazy">`)
-                            : `<div class="album-tile-image album-tile-empty"></div>`}
-                        <div class="album-tile-overlay">
-                            <div class="album-tile-title">${cat.label}</div>
-                            ${cat.subtitle ? `<div class="album-tile-subtitle">${cat.subtitle}</div>` : ''}
-                            <div class="album-tile-count">${count} ${count === 1 ? 'ITEM' : 'ITEMS'}</div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
+            if (categories.length === 0) {
+                tabs.innerHTML = '';
+                return;
+            }
 
-            document.querySelectorAll('.album-tile').forEach(tile => {
-                tile.addEventListener('click', () => openAlbum(tile.dataset.key));
+            const allTab = `
+                <button class="filter-tab active" data-filter="all">
+                    <span class="filter-tab-title">All</span>
+                    <span class="filter-tab-subtitle">Everything</span>
+                </button>
+            `;
+
+            const albumTabs = categories.map(cat => `
+                <button class="filter-tab" data-filter="${cat.key}">
+                    <span class="filter-tab-title">${cat.label}</span>
+                    ${cat.subtitle ? `<span class="filter-tab-subtitle">${cat.subtitle}</span>` : ''}
+                </button>
+            `).join('');
+
+            tabs.innerHTML = allTab + albumTabs;
+
+            document.querySelectorAll('.filter-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    currentFilter = tab.dataset.filter;
+                    renderGallery();
+                });
             });
         }
 
-        function openAlbum(key) {
-            currentCategory = key;
-            const cat = categories.find(c => c.key === key);
-
-            document.getElementById('albumGridSection').style.display = 'none';
-            document.getElementById('albumDetailSection').style.display = 'block';
-            document.getElementById('albumDetailTitle').textContent = cat ? cat.label : key;
-            document.getElementById('albumDetailSubtitle').textContent = cat ? (cat.subtitle || '') : '';
-
-            window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
-            renderGallery();
-        }
-
-        function closeAlbum() {
-            currentCategory = null;
-            document.getElementById('albumDetailSection').style.display = 'none';
-            document.getElementById('albumGridSection').style.display = 'block';
-        }
-
-        document.getElementById('backToAlbums').addEventListener('click', closeAlbum);
-
         // ============================================
-        // RENDER PHOTOS/VIDEOS WITHIN AN ALBUM
+        // FULL-WIDTH PHOTO/VIDEO GRID
         // ============================================
         function renderGallery() {
             const grid = document.getElementById('galleryGrid');
-            const filtered = allPhotos.filter(p => p.category === currentCategory);
+            const filtered = currentFilter === 'all'
+                ? allPhotos
+                : allPhotos.filter(p => p.category === currentFilter);
 
             if (filtered.length === 0) {
                 grid.innerHTML = `
                     <div class="empty-state">
-                        <p>No photos in this album yet</p>
+                        <p>${allPhotos.length === 0 ? 'Gallery coming soon!' : 'No photos in this album yet'}</p>
+                        ${allPhotos.length === 0 ? `<p style="font-size: 0.8rem; color: var(--light-gray); margin-top: 10px;">Start uploading photos from the admin dashboard.</p>` : ''}
                     </div>
                 `;
-                carouselCounter.textContent = '';
                 return;
             }
 
@@ -216,84 +182,11 @@
                 </div>
             `).join('');
 
-            // Add click listeners
             document.querySelectorAll('.gallery-item').forEach((item, index) => {
                 item.addEventListener('click', () => {
                     openModal(filtered[index]);
                 });
             });
-
-            initCarousel(filtered.length);
-        }
-
-        // ============================================
-        // CAROUSEL (swipe/scroll navigation)
-        // ============================================
-        const carouselPrev = document.getElementById('carouselPrev');
-        const carouselNext = document.getElementById('carouselNext');
-        const carouselCounter = document.getElementById('carouselCounter');
-
-        function initCarousel(count) {
-            if (count === 0) {
-                carouselCounter.textContent = '';
-                return;
-            }
-
-            updateCounter();
-
-            document.getElementById('galleryGrid').onscroll = debounceScroll(updateCounter, 100);
-
-            carouselPrev.onclick = () => scrollByOne(-1);
-            carouselNext.onclick = () => scrollByOne(1);
-        }
-
-        function currentIndex() {
-            const grid = document.getElementById('galleryGrid');
-            const items = [...grid.querySelectorAll('.gallery-item')];
-            if (items.length === 0) return 0;
-            const center = grid.scrollLeft + grid.clientWidth / 2;
-            let closest = 0;
-            let closestDist = Infinity;
-            items.forEach((item, i) => {
-                const itemCenter = item.offsetLeft + item.offsetWidth / 2;
-                const dist = Math.abs(itemCenter - center);
-                if (dist < closestDist) {
-                    closestDist = dist;
-                    closest = i;
-                }
-            });
-            return closest;
-        }
-
-        function updateCounter() {
-            const grid = document.getElementById('galleryGrid');
-            const items = grid.querySelectorAll('.gallery-item');
-            if (items.length === 0) {
-                carouselCounter.textContent = '';
-                return;
-            }
-            carouselCounter.textContent = `${currentIndex() + 1} / ${items.length}`;
-        }
-
-        function scrollByOne(direction) {
-            const grid = document.getElementById('galleryGrid');
-            const items = [...grid.querySelectorAll('.gallery-item')];
-            const target = Math.min(items.length - 1, Math.max(0, currentIndex() + direction));
-            const item = items[target];
-            if (item) {
-                grid.scrollTo({
-                    left: item.offsetLeft - (grid.clientWidth - item.offsetWidth) / 2,
-                    behavior: 'smooth'
-                });
-            }
-        }
-
-        function debounceScroll(fn, wait) {
-            let t;
-            return () => {
-                clearTimeout(t);
-                t = setTimeout(fn, wait);
-            };
         }
 
         // ============================================
