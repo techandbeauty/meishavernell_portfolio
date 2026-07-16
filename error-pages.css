@@ -1,0 +1,144 @@
+/* ============================================
+   SHARED STYLES - 404 + Coming Soon pages
+   ============================================ */
+
+.status-hero {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    padding: 40px 20px;
+    text-align: center;
+}
+
+.status-hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, rgba(201, 169, 98, 0.08) 0%, transparent 65%);
+    pointer-events: none;
+}
+
+.status-watermark {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(10rem, 40vw, 26rem);
+    line-height: 1;
+    color: transparent;
+    -webkit-text-stroke: 1px rgba(201, 169, 98, 0.12);
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+    pointer-events: none;
+    user-select: none;
+    z-index: 0;
+}
+
+.status-content {
+    position: relative;
+    z-index: 1;
+    max-width: 640px;
+    margin: 0 auto;
+}
+
+.status-eyebrow {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.35rem;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 24px;
+}
+
+.status-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 300;
+    font-style: italic;
+    font-size: clamp(2.8rem, 8vw, 5rem);
+    letter-spacing: 0.03em;
+    color: var(--white);
+    line-height: 1.1;
+    margin-bottom: 24px;
+}
+
+.status-divider {
+    width: 60px;
+    height: 1px;
+    background: var(--gold);
+    margin: 0 auto 24px;
+}
+
+.status-subtitle {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.95rem;
+    line-height: 1.8;
+    color: var(--light-gray);
+    max-width: 480px;
+    margin: 0 auto 40px;
+}
+
+.status-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    justify-content: center;
+}
+
+.status-btn {
+    display: inline-block;
+    padding: 16px 36px;
+    background: transparent;
+    border: 1px solid var(--gold);
+    color: var(--gold);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.2rem;
+    text-transform: uppercase;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.status-btn:hover {
+    background: var(--gold);
+    color: var(--black);
+}
+
+.status-btn.filled {
+    background: var(--gold);
+    color: var(--black);
+}
+
+.status-btn.filled:hover {
+    background: transparent;
+    color: var(--gold);
+}
+
+@media (max-width: 768px) {
+    .status-hero {
+        padding: 100px 20px 40px;
+    }
+
+    .status-title {
+        font-size: 2.4rem;
+    }
+
+    .status-subtitle {
+        font-size: 0.85rem;
+    }
+
+    .status-actions {
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+    }
+
+    .status-btn {
+        width: 100%;
+        max-width: 280px;
+    }
+}
