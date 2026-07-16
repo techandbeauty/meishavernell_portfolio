@@ -467,6 +467,24 @@
             margin-bottom: 10px;
         }
 
+        .gallery-item-album-select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            background: var(--black);
+            border: 1px solid var(--mid-gray);
+            color: var(--gold);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1rem;
+            cursor: pointer;
+        }
+
+        .gallery-item-album-select:focus {
+            outline: none;
+            border-color: var(--gold);
+        }
+
         .gallery-item-delete {
             width: 100%;
             padding: 8px;
@@ -1271,10 +1289,12 @@
 
                 container.innerHTML = snapshot.docs.map(doc => {
                     const data = doc.data();
-                    const catLabel = (galleryCategories.find(c => c.key === data.category) || {}).label || data.category;
                     const preview = data.type === 'video'
                         ? `<video src="${data.url}" muted style="width:100%;height:100%;object-fit:cover;"></video>`
                         : `<img src="${data.url}" alt="${data.caption || ''}">`;
+                    const albumOptions = galleryCategories.map(cat =>
+                        `<option value="${cat.key}" ${cat.key === data.category ? 'selected' : ''}>${cat.label}</option>`
+                    ).join('');
                     return `
                         <div class="gallery-item-card">
                             <div class="gallery-item-image">
@@ -1282,7 +1302,9 @@
                             </div>
                             <div class="gallery-item-info">
                                 <div class="gallery-item-caption">${data.caption || 'Untitled'}</div>
-                                <div class="gallery-item-category">${catLabel}</div>
+                                <select class="gallery-item-album-select" onchange="changeGalleryAlbum('${doc.id}', this.value, this)">
+                                    ${albumOptions}
+                                </select>
                                 <button type="button" class="gallery-item-delete" onclick="deleteGalleryPhoto('${doc.id}')">
                                     DELETE
                                 </button>
@@ -1305,6 +1327,17 @@
             } catch (error) {
                 showStatus('galleryStatus', `Error: ${error.message}`, 'error');
             }
+        }
+
+        async function changeGalleryAlbum(docId, newCategory, selectEl) {
+            selectEl.disabled = true;
+            try {
+                await firebase.firestore().collection('gallery').doc(docId).update({ category: newCategory });
+                showStatus('galleryStatus', '✓ Moved to new album', 'success');
+            } catch (error) {
+                showStatus('galleryStatus', `Error: ${error.message}`, 'error');
+            }
+            selectEl.disabled = false;
         }
 
         // ============================================
