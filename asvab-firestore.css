@@ -12,6 +12,79 @@
     --gold: #c9a962;
 }
 
+/* ---------- Space background ----------
+   A Space-Force-style deep-field backdrop for the whole page: a near-black
+   navy base, two soft nebula glows in gold/steel-blue, and a few layers of
+   pure-CSS stars (no images, so nothing to host or load). Fixed so it holds
+   still behind all the content as visitors scroll. */
+body {
+    background-color: #030309;
+    background-image:
+        radial-gradient(ellipse 900px 600px at 15% 8%, rgba(201, 169, 98, 0.10), transparent 60%),
+        radial-gradient(ellipse 800px 700px at 85% 30%, rgba(70, 100, 160, 0.14), transparent 60%),
+        radial-gradient(ellipse 700px 500px at 50% 90%, rgba(201, 169, 98, 0.06), transparent 65%),
+        linear-gradient(180deg, #030309 0%, #05050d 45%, #030309 100%);
+    background-attachment: fixed;
+    background-size: cover;
+    position: relative;
+}
+
+/* Three star layers at different densities/sizes for parallax depth,
+   drawn with radial-gradient dots tiled across the viewport. */
+body::before,
+body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+}
+
+body::before {
+    background-image:
+        radial-gradient(1.5px 1.5px at 20px 30px, rgba(255,255,255,0.9), transparent),
+        radial-gradient(1px 1px at 90px 80px, rgba(255,255,255,0.7), transparent),
+        radial-gradient(1.5px 1.5px at 160px 150px, rgba(201,169,98,0.8), transparent),
+        radial-gradient(1px 1px at 230px 40px, rgba(255,255,255,0.6), transparent),
+        radial-gradient(1.5px 1.5px at 300px 200px, rgba(255,255,255,0.8), transparent),
+        radial-gradient(1px 1px at 50px 220px, rgba(255,255,255,0.5), transparent),
+        radial-gradient(1.5px 1.5px at 340px 60px, rgba(255,255,255,0.7), transparent);
+    background-repeat: repeat;
+    background-size: 380px 380px;
+    animation: twinkle 6s ease-in-out infinite alternate;
+}
+
+body::after {
+    background-image:
+        radial-gradient(1px 1px at 60px 60px, rgba(255,255,255,0.4), transparent),
+        radial-gradient(1px 1px at 190px 120px, rgba(255,255,255,0.35), transparent),
+        radial-gradient(1px 1px at 280px 260px, rgba(255,255,255,0.4), transparent),
+        radial-gradient(1px 1px at 340px 180px, rgba(201,169,98,0.4), transparent),
+        radial-gradient(1px 1px at 110px 300px, rgba(255,255,255,0.3), transparent);
+    background-repeat: repeat;
+    background-size: 420px 420px;
+    animation: twinkle 8s ease-in-out infinite alternate-reverse;
+}
+
+@keyframes twinkle {
+    0%   { opacity: 0.5; }
+    50%  { opacity: 1; }
+    100% { opacity: 0.6; }
+}
+
+/* Everything else needs to render above the star layers */
+.nav, .noise, .asvab-hero, .asvab-main, .study-materials-section,
+.modal, .footer {
+    position: relative;
+    z-index: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body::before, body::after {
+        animation: none;
+    }
+}
+
 /* Hero Section */
 .asvab-hero {
     min-height: 60vh;
@@ -63,18 +136,22 @@
 }
 
 .cta-card {
-    background: var(--dark-gray);
+    background: rgba(26, 26, 26, 0.55);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
     border: 1px solid var(--mid-gray);
     padding: 50px 40px;
     text-align: center;
     transition: all 0.3s ease;
     display: flex;
     flex-direction: column;
+    box-shadow: 0 0 40px rgba(201, 169, 98, 0.04);
 }
 
 .cta-card:hover {
     border-color: var(--gold);
     transform: translateY(-5px);
+    box-shadow: 0 0 50px rgba(201, 169, 98, 0.12);
 }
 
 .cta-icon {
@@ -98,7 +175,7 @@
 }
 
 .resource-preview {
-    background: var(--black);
+    background: rgba(0, 0, 0, 0.5);
     border: 1px solid var(--mid-gray);
     padding: 25px;
     margin-bottom: 30px;
@@ -299,12 +376,16 @@
 }
 
 .modal-content {
-    background: var(--dark);
+    background: rgba(10, 10, 10, 0.92);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     border: 1px solid var(--mid-gray);
     padding: 50px;
     max-width: 500px;
     width: 100%;
     position: relative;
+    max-height: 88vh;
+    overflow-y: auto;
 }
 
 .modal-close {
@@ -368,6 +449,48 @@
 .form-group select:focus {
     outline: none;
     border-color: var(--gold);
+}
+
+.subject-check-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.subject-check-grid.all-selected label:not(.subject-check-all) {
+    opacity: 0.35;
+    pointer-events: none;
+}
+
+.subject-check {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid var(--mid-gray);
+    padding: 10px 12px;
+    font-size: 0.78rem;
+    color: var(--light-gray);
+    cursor: pointer;
+    transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+.subject-check:has(input:checked) {
+    border-color: var(--gold);
+    color: var(--gold);
+}
+
+.subject-check input {
+    width: auto;
+    accent-color: var(--gold);
+}
+
+.subject-check-all {
+    grid-column: 1 / -1;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05rem;
+    font-size: 0.7rem;
 }
 
 .submit-btn {
@@ -487,6 +610,10 @@
 
     .modal-title {
         font-size: 1.5rem;
+    }
+
+    .subject-check-grid {
+        grid-template-columns: 1fr;
     }
 }
 

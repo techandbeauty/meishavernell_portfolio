@@ -365,7 +365,7 @@
                 loadPracticeTests();
                 loadFlashcards();
                 loadStudyNotes();
-                loadLiveSessions(user.uid);
+                loadLiveSessions(user.uid, user.email);
             } else {
                 dashboard.classList.remove('show');
                 loginWrap.style.display = 'block';
@@ -385,6 +385,23 @@
                 document.getElementById(`${btn.dataset.tab}-tab`).classList.add('active');
             });
         });
+
+        // ============================================
+        // COMING SOON (inline empty state, matches the site's
+        // 404/Coming Soon pages at dashboard scale)
+        // ============================================
+        function renderComingSoon({ watermark = 'SOON', eyebrow = 'Coming Soon', title, sub }) {
+            return `
+                <div class="portal-coming-soon">
+                    <div class="portal-coming-soon-watermark" aria-hidden="true">${watermark}</div>
+                    <div class="portal-coming-soon-content">
+                        <p class="portal-coming-soon-eyebrow">${eyebrow}</p>
+                        <p class="portal-coming-soon-title">${title}</p>
+                        <p class="portal-coming-soon-sub">${sub}</p>
+                    </div>
+                </div>
+            `;
+        }
 
         function buildFilters(container, items, listRenderFn) {
             const subjects = [...new Set(items.map(i => i.subject).filter(Boolean))];
@@ -412,7 +429,11 @@
                 const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
 
                 if (items.length === 0) {
-                    listEl.innerHTML = '<div class="portal-empty">No practice tests posted yet - check back soon!</div>';
+                    listEl.innerHTML = renderComingSoon({
+                        eyebrow: 'Practice Tests',
+                        title: 'New practice questions are on the way.',
+                        sub: "Meisha is putting together ASVAB practice questions for you - check back soon."
+                    });
                     return;
                 }
 
@@ -464,7 +485,11 @@
                 const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
 
                 if (items.length === 0) {
-                    listEl.innerHTML = '<div class="portal-empty">No flashcards posted yet - check back soon!</div>';
+                    listEl.innerHTML = renderComingSoon({
+                        eyebrow: 'Flashcards',
+                        title: 'Flashcards are being made.',
+                        sub: "Meisha is building out a flashcard deck for you - check back soon."
+                    });
                     return;
                 }
 
@@ -505,7 +530,11 @@
                 const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
 
                 if (items.length === 0) {
-                    listEl.innerHTML = '<div class="portal-empty">No study notes posted yet - check back soon!</div>';
+                    listEl.innerHTML = renderComingSoon({
+                        eyebrow: 'Study Notes',
+                        title: 'Study notes are coming.',
+                        sub: "Meisha is writing up study notes and test-taking tips for you - check back soon."
+                    });
                     return;
                 }
 
@@ -537,18 +566,52 @@
         // ============================================
         // LIVE SESSIONS
         // ============================================
-        async function loadLiveSessions(uid) {
+        function calendarCardHtml() {
+            return `
+                <div class="portal-calendar-card">
+                    <div class="portal-calendar-card-header">
+                        <h3>Live Session Calendar</h3>
+                        <p>This updates automatically whenever Meisha's availability changes - no need to refresh.</p>
+                    </div>
+                    <div class="portal-calendar-frame-wrap">
+                        <iframe src="https://calendar.google.com/calendar/embed?height=600&amp;wkst=1&amp;ctz=America%2FNew_York&amp;showTz=0&amp;showCalendars=0&amp;title=ASVAB%20PREP&amp;src=NjcxNzJkZjc0MDVmNjQ4NDNkMTYzZWQ2YzM4NGJiNDMwMTNmNGJkODQ2YTI0YjVmZTZjMTY2NDFlNWE5OWU5ZUBncm91cC5jYWxlbmRhci5nb29nbGUuY29t&amp;src=ZW4udXNhI2hvbGlkYXlAZ3JvdXAudi5jYWxlbmRhci5nb29nbGUuY29t&amp;color=%23c0ca33&amp;color=%230b8043" style="border-width:0" scrolling="no" title="ASVAB Prep live session availability"></iframe>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function loadLiveSessions(uid, email) {
             const listEl = document.getElementById('sessionsList');
             try {
+                // Live session calendar + reservations only unlock once
+                // Meisha approves this member's session request (see the
+                // ASVAB Prep page's "Register for Live Sessions" form).
+                const approvedSnap = await db.collection('approvedForSessions').doc((email || '').toLowerCase()).get();
+
+                if (!approvedSnap.exists) {
+                    listEl.innerHTML = renderComingSoon({
+                        watermark: 'SOON',
+                        eyebrow: 'Pending Approval',
+                        title: "You're almost in.",
+                        sub: 'Request a live session from the ASVAB Prep page. Once Meisha approves your request, the live session calendar unlocks right here.'
+                    });
+                    return;
+                }
+
                 const snap = await db.collection('liveSessions').orderBy('dateTime', 'asc').get();
                 const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
 
                 if (items.length === 0) {
-                    listEl.innerHTML = '<div class="portal-empty">No upcoming sessions posted yet - check back soon!</div>';
+                    listEl.innerHTML = calendarCardHtml() + renderComingSoon({
+                        watermark: 'SOON',
+                        eyebrow: 'Live Sessions',
+                        title: 'No bookable sessions posted yet.',
+                        sub: 'Check the calendar above for availability - reservable sessions will appear here soon.'
+                    });
                     return;
                 }
 
-                listEl.innerHTML = items.map(item => {
+                listEl.innerHTML = calendarCardHtml() + '<div id="sessionCardsWrap">' + items.map(item => {
                     const dt = item.dateTime ? new Date(item.dateTime) : null;
                     const dtLabel = dt ? dt.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : '';
                     const full = (item.spotsTaken || 0) >= (item.spotsTotal || 0);
@@ -563,7 +626,7 @@
                             <button class="session-reserve-btn" ${full ? 'disabled' : ''}>${full ? 'Full' : 'Reserve My Spot'}</button>
                         </div>
                     `;
-                }).join('');
+                }).join('') + '</div>';
 
                 // Check which sessions this member already reserved
                 for (const item of items) {

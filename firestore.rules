@@ -123,6 +123,26 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
+    // Public "request a live session" form on the ASVAB page. Anyone can
+    // submit a request (name/email/branch/subjects needed); no public read,
+    // so requests can't be listed or scraped - only the admin reviews them
+    // in the dashboard.
+    match /sessionRequests/{docId} {
+      allow create: if request.resource.data.email is string
+                     && request.resource.data.status == 'pending';
+      allow read, update, delete: if isAdmin();
+    }
+
+    // Once the admin approves a session request, a doc is created here
+    // with its ID set to the person's (lowercased) email. A signed-in
+    // portal member can read ONLY their own approval doc, to unlock the
+    // Live Sessions calendar - they can never write to it themselves.
+    match /approvedForSessions/{docId} {
+      allow read: if isAdmin() ||
+        (isSignedIn() && request.auth.token.email == docId);
+      allow write: if isAdmin();
+    }
+
     // Deny everything else by default.
     match /{document=**} {
       allow read, write: if false;

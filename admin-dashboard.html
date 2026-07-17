@@ -956,6 +956,17 @@
         <!-- Live Sessions Tab -->
         <div class="tab-content" id="sessions-tab">
             <div class="content-section">
+                <h2 class="section-title">Session Requests</h2>
+                <p style="color: var(--light-gray); font-size: 0.85rem; margin-bottom: 20px;">
+                    People who requested a live session from the ASVAB Prep page. Approve someone to unlock the
+                    live session calendar for them in the Portal - they sign in (or create an account) with the
+                    same email they used here.
+                </p>
+                <div class="loading" id="sessionRequestLoading">Loading requests...</div>
+                <div id="sessionRequestItems"></div>
+            </div>
+
+            <div class="content-section">
                 <h2 class="section-title">Add Live Session</h2>
                 <form class="upload-form" id="sessionUploadForm">
                     <div class="status-message" id="sessionStatus"></div>
@@ -1031,10 +1042,13 @@
             dashboardContainer.style.display = 'block';
             loadGalleryCategories().then(loadGalleryPhotos);
             loadSiteMedia();
-            loadPracticeQuestions();
-            loadFlashcards();
-            loadNotes();
+            seedDefaultAsvabContent().then(() => {
+                loadPracticeQuestions();
+                loadFlashcards();
+                loadNotes();
+            });
             loadSessions();
+            loadSessionRequests();
         }
 
         loginForm.addEventListener('submit', async (e) => {
@@ -1546,6 +1560,144 @@
         }
 
         // ============================================
+        // DEFAULT ASVAB CONTENT - auto-seeded once, the first time each
+        // collection is empty, so the portal never looks bare. Add,
+        // edit, or delete freely from the tabs below afterward - this
+        // never runs again once a collection has at least one item.
+        // ============================================
+        const DEFAULT_PRACTICE_TESTS = [
+            {
+                subject: 'Arithmetic Reasoning',
+                question: 'A recruit runs 3 miles in 24 minutes. At that same pace, how long will it take to run 5 miles?',
+                choices: ['32 minutes', '40 minutes', '36 minutes', '45 minutes'],
+                correctIndex: 1,
+                explanation: '24 minutes ÷ 3 miles = 8 minutes per mile. 8 × 5 miles = 40 minutes.'
+            },
+            {
+                subject: 'Word Knowledge',
+                question: '"Meticulous" most nearly means:',
+                choices: ['Careless', 'Extremely careful and precise', 'Fast-paced', 'Uncertain'],
+                correctIndex: 1,
+                explanation: 'Meticulous means showing great attention to detail; extremely careful and precise.'
+            },
+            {
+                subject: 'Paragraph Comprehension',
+                question: 'Read: "Although the storm delayed the convoy by six hours, the unit still reached the base before nightfall." What can be concluded?',
+                choices: ['The convoy never reached the base', 'The storm had no effect on travel time', 'The unit arrived later than planned but still before dark', 'The base was closed due to the storm'],
+                correctIndex: 2,
+                explanation: 'The passage states the delay was six hours, but the unit still arrived before nightfall - meaning they were behind schedule but still made it in daylight.'
+            },
+            {
+                subject: 'Mathematics Knowledge',
+                question: 'What is the value of x in: 3x + 7 = 22?',
+                choices: ['3', '5', '7', '15'],
+                correctIndex: 1,
+                explanation: '3x = 22 - 7 = 15, so x = 15 ÷ 3 = 5.'
+            },
+            {
+                subject: 'General Science',
+                question: 'Which organ is primarily responsible for filtering waste from the blood?',
+                choices: ['Liver', 'Kidney', 'Pancreas', 'Spleen'],
+                correctIndex: 1,
+                explanation: 'The kidneys filter waste products and excess fluid from the blood to produce urine.'
+            },
+            {
+                subject: 'Electronics Information',
+                question: 'In a basic circuit, what unit measures electrical resistance?',
+                choices: ['Volt', 'Watt', 'Ohm', 'Ampere'],
+                correctIndex: 2,
+                explanation: 'Resistance is measured in ohms (Ω), named after Georg Ohm.'
+            },
+            {
+                subject: 'Mechanical Comprehension',
+                question: 'A lever makes work easier mainly by:',
+                choices: ['Increasing the force needed', 'Changing the direction and/or amount of force applied', 'Eliminating the need for force', 'Reducing the distance an object must travel'],
+                correctIndex: 1,
+                explanation: 'A lever is a simple machine that changes the amount and/or direction of force needed to move a load.'
+            },
+            {
+                subject: 'Auto & Shop Information',
+                question: 'Which tool is designed specifically to measure the diameter of a cylindrical object precisely?',
+                choices: ['Tape measure', 'Caliper', 'Level', 'Socket wrench'],
+                correctIndex: 1,
+                explanation: 'A caliper is used to measure the internal or external dimensions of an object with precision.'
+            }
+        ];
+
+        const DEFAULT_FLASHCARDS = [
+            { subject: 'Word Knowledge', front: 'Candid', back: 'Truthful and straightforward; frank' },
+            { subject: 'Word Knowledge', front: 'Tenacious', back: 'Persistent; holding firmly to a course of action' },
+            { subject: 'Mathematics Knowledge', front: 'Area of a circle', back: 'A = πr² (pi times radius squared)' },
+            { subject: 'Mathematics Knowledge', front: 'Pythagorean Theorem', back: 'a² + b² = c² (for right triangles, c = hypotenuse)' },
+            { subject: 'General Science', front: 'Photosynthesis', back: 'The process plants use to convert sunlight, water, and CO₂ into glucose and oxygen' },
+            { subject: 'Electronics Information', front: "Ohm's Law", back: 'V = I × R (Voltage = Current × Resistance)' },
+            { subject: 'Mechanical Comprehension', front: 'Mechanical Advantage', back: 'The factor by which a machine multiplies the input force' },
+            { subject: 'Arithmetic Reasoning', front: 'Percentage formula', back: 'Part ÷ Whole × 100 = Percentage' }
+        ];
+
+        const DEFAULT_STUDY_NOTES = [
+            {
+                title: 'How the AFQT Score Works',
+                subject: 'Test Strategy',
+                content: 'Your AFQT (Armed Forces Qualification Test) score comes from four subtests: Arithmetic Reasoning, Word Knowledge, Paragraph Comprehension, and Mathematics Knowledge. This score determines whether you qualify to enlist and can affect which jobs are available to you - so focus your prep time here first.'
+            },
+            {
+                title: 'Time Management on Test Day',
+                subject: 'Test Strategy',
+                content: "Each ASVAB section is timed separately, and you can't go back once time is up on a section. Keep a steady pace: if a question is taking too long, make your best guess and move on. There's no penalty for guessing, so never leave a question blank."
+            },
+            {
+                title: 'Process of Elimination',
+                subject: 'Test Strategy',
+                content: "On multiple choice questions, first eliminate any answers you know are wrong. Even removing one or two options significantly improves your odds on a guess - especially useful on Word Knowledge and Mechanical Comprehension questions."
+            },
+            {
+                title: 'Building Vocabulary for Word Knowledge',
+                subject: 'Word Knowledge',
+                content: "Word Knowledge questions test both direct definitions and words used in context. Read daily and keep a running list of unfamiliar words. Learning common prefixes/suffixes (like 'bene-' = good, '-ology' = study of) helps you make educated guesses on words you've never seen."
+            },
+            {
+                title: 'Core Math Formulas to Memorize',
+                subject: 'Mathematics Knowledge',
+                content: 'Know these cold: area/perimeter of squares, rectangles, triangles, and circles; the Pythagorean theorem; converting fractions to decimals and percentages; and basic algebra. Most Math Knowledge questions test recall and quick application, not complex reasoning.'
+            },
+            {
+                title: 'Reading Strategy for Paragraph Comprehension',
+                subject: 'Paragraph Comprehension',
+                content: "Read the question first, then the passage - it tells you what to look for. Answers should come directly from the passage, not outside knowledge. Watch for words like 'always,' 'never,' and 'only' in answer choices; they're often wrong."
+            },
+            {
+                title: 'General Science Quick Review',
+                subject: 'General Science',
+                content: 'Focus on basic biology (cell structure, human body systems), earth science (weather, geology basics), and physical science (states of matter, basic chemistry). This section is broad but high-school-intro level - wide review beats deep study here.'
+            }
+        ];
+
+        async function seedIfEmpty(collectionName, defaults, mapFn) {
+            const check = await firebase.firestore().collection(collectionName).limit(1).get();
+            if (!check.empty) return;
+            const batch = firebase.firestore().batch();
+            defaults.forEach(item => {
+                const ref = firebase.firestore().collection(collectionName).doc();
+                batch.set(ref, mapFn(item));
+            });
+            await batch.commit();
+        }
+
+        async function seedDefaultAsvabContent() {
+            const ts = firebase.firestore.FieldValue.serverTimestamp;
+            try {
+                await Promise.all([
+                    seedIfEmpty('practiceTests', DEFAULT_PRACTICE_TESTS, q => ({ ...q, createdAt: ts() })),
+                    seedIfEmpty('flashcards', DEFAULT_FLASHCARDS, c => ({ ...c, createdAt: ts() })),
+                    seedIfEmpty('studyNotes', DEFAULT_STUDY_NOTES, n => ({ ...n, fileUrl: '', fileType: '', createdAt: ts() }))
+                ]);
+            } catch (error) {
+                console.log('Default ASVAB content seed skipped/failed (safe to ignore if already seeded):', error.message);
+            }
+        }
+
+        // ============================================
         // PRACTICE TESTS
         // ============================================
         document.getElementById('practiceUploadForm').addEventListener('submit', async (e) => {
@@ -1790,6 +1942,78 @@
                 showStatus('noteStatus', '✓ Note deleted', 'success');
             } catch (error) {
                 showStatus('noteStatus', `Error: ${error.message}`, 'error');
+            }
+        }
+
+        // ============================================
+        // SESSION REQUESTS (from the public ASVAB Prep page)
+        // ============================================
+        async function loadSessionRequests() {
+            const container = document.getElementById('sessionRequestItems');
+            const loading = document.getElementById('sessionRequestLoading');
+
+            try {
+                const snapshot = await firebase.firestore().collection('sessionRequests').orderBy('requestedAt', 'desc').get();
+                loading.style.display = 'none';
+
+                if (snapshot.empty) {
+                    container.innerHTML = '<p style="text-align: center; color: var(--light-gray);">No session requests yet.</p>';
+                    return;
+                }
+
+                container.innerHTML = snapshot.docs.map(doc => {
+                    const data = doc.data();
+                    const subjects = (data.subjectsNeeded || []).join(', ') || 'Not specified';
+                    const requested = data.requestedAt && data.requestedAt.toDate ? data.requestedAt.toDate().toLocaleString() : '';
+                    const statusColor = data.status === 'approved' ? '#8fce9a' : data.status === 'declined' ? '#e08787' : 'var(--gold)';
+
+                    return `
+                        <div style="background: var(--dark-gray); border: 1px solid var(--mid-gray); padding: 20px; margin-bottom: 20px;">
+                            <p style="font-size: 0.7rem; color: ${statusColor}; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05rem;">${data.status || 'pending'}${requested ? ' · ' + requested : ''}</p>
+                            <h3 style="color: var(--white); margin-bottom: 6px;">${data.fullName || 'Unnamed'}</h3>
+                            <p style="color: var(--light-gray); font-size: 0.85rem; margin-bottom: 4px;">${data.email || ''}</p>
+                            <p style="color: var(--light-gray); font-size: 0.85rem; margin-bottom: 4px;">Branch: ${data.branch || 'Not specified'} · Target test date: ${data.testDate || 'Not specified'}</p>
+                            <p style="color: var(--gold); font-size: 0.85rem; margin-bottom: 15px;">Needs help with: ${subjects}</p>
+                            <div class="btn-group">
+                                ${data.status === 'approved'
+                                    ? '<span style="color: #8fce9a; font-size: 0.8rem;">✓ Approved - can now see the calendar in the Portal</span>'
+                                    : `
+                                        <button onclick="approveSessionRequest('${doc.id}', '${(data.email || '').replace(/'/g, "\\'")}')" style="background: var(--gold); border: none; color: var(--black); padding: 8px 15px; cursor: pointer; font-size: 0.8rem; font-weight: 600;">APPROVE</button>
+                                        <button onclick="declineSessionRequest('${doc.id}')" style="background: transparent; border: 1px solid var(--mid-gray); color: #fca5a5; padding: 8px 15px; cursor: pointer; font-size: 0.8rem;">DECLINE</button>
+                                    `}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (error) {
+                loading.innerHTML = `<p style="color: #fca5a5;">Error loading session requests: ${error.message}</p>`;
+            }
+        }
+
+        async function approveSessionRequest(docId, email) {
+            if (!email) {
+                alert('This request has no email on file - cannot approve.');
+                return;
+            }
+            try {
+                await firebase.firestore().collection('approvedForSessions').doc(email.toLowerCase()).set({
+                    email: email.toLowerCase(),
+                    approvedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                await firebase.firestore().collection('sessionRequests').doc(docId).update({ status: 'approved' });
+                loadSessionRequests();
+            } catch (error) {
+                alert(`Error approving request: ${error.message}`);
+            }
+        }
+
+        async function declineSessionRequest(docId) {
+            if (!confirm('Decline this session request?')) return;
+            try {
+                await firebase.firestore().collection('sessionRequests').doc(docId).update({ status: 'declined' });
+                loadSessionRequests();
+            } catch (error) {
+                alert(`Error declining request: ${error.message}`);
             }
         }
 

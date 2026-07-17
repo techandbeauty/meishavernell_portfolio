@@ -292,6 +292,110 @@ body {
     padding: 60px 20px;
 }
 
+/* ---------- Coming Soon (inline empty state) ----------
+   Shown inside a portal tab instead of a plain "nothing here yet" line,
+   echoing the site's 404/Coming Soon page look at dashboard scale. */
+.portal-coming-soon {
+    position: relative;
+    overflow: hidden;
+    text-align: center;
+    padding: 70px 24px;
+    border: 1px solid var(--dark-gray);
+    border-radius: 4px;
+    background: var(--dark);
+}
+
+.portal-coming-soon-watermark {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(3rem, 12vw, 6rem);
+    letter-spacing: 0.15rem;
+    color: var(--dark-gray);
+    opacity: 0.5;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.portal-coming-soon-content {
+    position: relative;
+    z-index: 1;
+}
+
+.portal-coming-soon-eyebrow {
+    font-size: 0.65rem;
+    letter-spacing: 0.15rem;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 10px;
+}
+
+.portal-coming-soon-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 1.3rem;
+    color: var(--white);
+    max-width: 420px;
+    margin: 0 auto 8px;
+    line-height: 1.5;
+}
+
+.portal-coming-soon-sub {
+    font-size: 0.78rem;
+    color: var(--light-gray);
+    max-width: 380px;
+    margin: 0 auto;
+    line-height: 1.6;
+}
+
+/* ---------- Live Sessions calendar ---------- */
+
+.portal-calendar-card {
+    border: 1px solid var(--dark-gray);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 28px;
+    background: var(--dark);
+}
+
+.portal-calendar-card-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--dark-gray);
+}
+
+.portal-calendar-card-header h3 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.1rem;
+    color: var(--white);
+    margin-bottom: 4px;
+}
+
+.portal-calendar-card-header p {
+    font-size: 0.75rem;
+    color: var(--light-gray);
+}
+
+.portal-calendar-frame-wrap {
+    background: var(--white);
+    line-height: 0;
+}
+
+.portal-calendar-frame-wrap iframe {
+    width: 100%;
+    display: block;
+    border: 0;
+    height: 550px;
+}
+
+@media (max-width: 640px) {
+    .portal-calendar-frame-wrap iframe {
+        height: 420px;
+    }
+}
+
 /* Practice tests */
 
 .practice-card {

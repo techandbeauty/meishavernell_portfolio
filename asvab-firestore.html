@@ -175,13 +175,31 @@
                     <label for="testDate">Target Test Date</label>
                     <input type="date" id="testDate" name="testDate">
                 </div>
+                <div class="form-group">
+                    <label>What Do You Need Help With?</label>
+                    <div class="subject-check-grid" id="subjectCheckGrid">
+                        <label class="subject-check subject-check-all">
+                            <input type="checkbox" id="subjectAll">
+                            All of It / Full ASVAB Prep
+                        </label>
+                        <label class="subject-check"><input type="checkbox" class="subject-item" value="Arithmetic Reasoning"> Arithmetic Reasoning</label>
+                        <label class="subject-check"><input type="checkbox" class="subject-item" value="Word Knowledge"> Word Knowledge</label>
+                        <label class="subject-check"><input type="checkbox" class="subject-item" value="Paragraph Comprehension"> Paragraph Comprehension</label>
+                        <label class="subject-check"><input type="checkbox" class="subject-item" value="Mathematics Knowledge"> Mathematics Knowledge</label>
+                        <label class="subject-check"><input type="checkbox" class="subject-item" value="General Science"> General Science</label>
+                        <label class="subject-check"><input type="checkbox" class="subject-item" value="Electronics Information"> Electronics Information</label>
+                        <label class="subject-check"><input type="checkbox" class="subject-item" value="Auto &amp; Shop Information"> Auto &amp; Shop Information</label>
+                        <label class="subject-check"><input type="checkbox" class="subject-item" value="Mechanical Comprehension"> Mechanical Comprehension</label>
+                        <label class="subject-check"><input type="checkbox" class="subject-item" value="Assembling Objects"> Assembling Objects</label>
+                    </div>
+                </div>
                 <button type="submit" class="submit-btn">REGISTER NOW</button>
             </form>
             <div class="success-state" id="sessionsSuccess">
                 <div class="success-icon">✓</div>
-                <h3>You're Registered!</h3>
-                <p>Check your email for the Zoom link and session details.</p>
-                <p>You'll also receive information about optional donations to support 1-on-1 study sessions.</p>
+                <h3>Request Received!</h3>
+                <p>Meisha will review your request and reach out by email once you're approved for the portal.</p>
+                <p>Once approved, log in at the Portal to see the live session calendar and reserve your spot.</p>
             </div>
         </div>
     </div>
@@ -193,12 +211,31 @@
 
     <!-- Firebase Config -->
     <script src="firebase-config.js"></script>
-    
+
+    <!-- EmailJS - sends Meisha an email when someone requests a live
+         session, with no backend server required. -->
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+
     <!-- Page JavaScript -->
     <script>
         // Study materials, practice tests, flashcards and live sessions
         // now live in portal.html behind member login - see the CTA
         // section above. Nothing to load here anymore.
+
+        // ============================================
+        // EMAILJS CONFIG
+        // Fill these in with your own free EmailJS account details
+        // (see the setup steps Claude gave you). Until then, session
+        // requests still save to Firestore and show up in the admin
+        // dashboard - they just won't also send you an email.
+        // ============================================
+        const EMAILJS_PUBLIC_KEY = 'YOUR_EMAILJS_PUBLIC_KEY';
+        const EMAILJS_SERVICE_ID = 'YOUR_EMAILJS_SERVICE_ID';
+        const EMAILJS_TEMPLATE_ID = 'YOUR_EMAILJS_TEMPLATE_ID';
+        const EMAILJS_READY = EMAILJS_PUBLIC_KEY !== 'YOUR_EMAILJS_PUBLIC_KEY';
+        if (EMAILJS_READY && window.emailjs) {
+            emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
+        }
 
         // ============================================
         // MODAL MANAGEMENT
@@ -291,14 +328,39 @@
             }
         });
 
+        // "All of It" overrides/clears the individual subject checkboxes
+        const subjectAll = document.getElementById('subjectAll');
+        const subjectGrid = document.getElementById('subjectCheckGrid');
+        const subjectItemBoxes = () => Array.from(subjectGrid.querySelectorAll('.subject-item'));
+
+        subjectAll.addEventListener('change', () => {
+            if (subjectAll.checked) {
+                subjectItemBoxes().forEach(cb => { cb.checked = false; });
+                subjectGrid.classList.add('all-selected');
+            } else {
+                subjectGrid.classList.remove('all-selected');
+            }
+        });
+        subjectItemBoxes().forEach(cb => {
+            cb.addEventListener('change', () => {
+                if (cb.checked) {
+                    subjectAll.checked = false;
+                    subjectGrid.classList.remove('all-selected');
+                }
+            });
+        });
+
         document.getElementById('sessionsForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            
+
             const name = document.getElementById('sessionName').value.trim();
             const email = document.getElementById('sessionEmail').value.trim().toLowerCase();
             const branch = document.getElementById('sessionBranch').value;
             const testDate = document.getElementById('testDate').value;
-            
+            const subjectsNeeded = subjectAll.checked
+                ? ['All of It / Full ASVAB Prep']
+                : subjectItemBoxes().filter(cb => cb.checked).map(cb => cb.value);
+
             // Validate
             if (!name || name.length < 2) {
                 alert('Please enter a valid name');
@@ -308,7 +370,7 @@
                 alert('Please enter a valid email');
                 return;
             }
-            
+
             try {
                 const timestamp = firebase.firestore.FieldValue.serverTimestamp();
 
@@ -331,6 +393,39 @@
                         unsubscribedAt: null,
                         lastEmailType: 'Sessions',
                     }, { merge: true });
+
+                // Save the request itself so it shows up in the admin
+                // dashboard's "Session Requests" list for approval - this is
+                // separate from "contacts" so it can carry a pending/approved
+                // status without disturbing the mailing-list record above.
+                await firebase.firestore().collection('sessionRequests').add({
+                    fullName: name,
+                    email: email,
+                    branch: branch || '',
+                    testDate: testDate || '',
+                    subjectsNeeded: subjectsNeeded,
+                    status: 'pending',
+                    requestedAt: timestamp
+                });
+
+                // Let Meisha know by email what this person needs help with.
+                // This never blocks the success screen - if it's not set up
+                // yet, or fails for any reason, the request is still safely
+                // saved in Firestore above.
+                if (EMAILJS_READY && window.emailjs) {
+                    try {
+                        await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+                            to_email: 'officeof.meishavernell@gmail.com',
+                            from_name: name,
+                            from_email: email,
+                            branch: branch || 'Not specified',
+                            test_date: testDate || 'Not specified',
+                            subjects_needed: subjectsNeeded.join(', ') || 'Not specified'
+                        });
+                    } catch (emailErr) {
+                        console.error('EmailJS error (request was still saved):', emailErr);
+                    }
+                }
 
                 // Show success
                 document.getElementById('sessionsForm').style.display = 'none';
