@@ -2,27 +2,223 @@
    PORTAL.CSS - Member Portal
    ============================================ */
 
+/* ---------- Space background (same treatment as the ASVAB page,
+   since this portal is the ASVAB member area) ---------- */
 body {
-    background: var(--black);
+    background-color: #030309;
+    background-image:
+        radial-gradient(ellipse 900px 600px at 15% 8%, rgba(201, 169, 98, 0.10), transparent 60%),
+        radial-gradient(ellipse 800px 700px at 85% 30%, rgba(70, 100, 160, 0.14), transparent 60%),
+        radial-gradient(ellipse 700px 500px at 50% 90%, rgba(201, 169, 98, 0.06), transparent 65%),
+        linear-gradient(180deg, #030309 0%, #05050d 45%, #030309 100%);
+    background-attachment: fixed;
+    background-size: cover;
+    position: relative;
 }
 
+body::before,
+body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+}
+
+body::before {
+    background-image:
+        radial-gradient(1.5px 1.5px at 20px 30px, rgba(255,255,255,0.9), transparent),
+        radial-gradient(1px 1px at 90px 80px, rgba(255,255,255,0.7), transparent),
+        radial-gradient(1.5px 1.5px at 160px 150px, rgba(201,169,98,0.8), transparent),
+        radial-gradient(1px 1px at 230px 40px, rgba(255,255,255,0.6), transparent),
+        radial-gradient(1.5px 1.5px at 300px 200px, rgba(255,255,255,0.8), transparent),
+        radial-gradient(1px 1px at 50px 220px, rgba(255,255,255,0.5), transparent),
+        radial-gradient(1.5px 1.5px at 340px 60px, rgba(255,255,255,0.7), transparent);
+    background-repeat: repeat;
+    background-size: 380px 380px;
+    animation: twinkle 6s ease-in-out infinite alternate, drift-a 110s linear infinite alternate;
+}
+
+body::after {
+    background-image:
+        radial-gradient(1px 1px at 60px 60px, rgba(255,255,255,0.4), transparent),
+        radial-gradient(1px 1px at 190px 120px, rgba(255,255,255,0.35), transparent),
+        radial-gradient(1px 1px at 280px 260px, rgba(255,255,255,0.4), transparent),
+        radial-gradient(1px 1px at 340px 180px, rgba(201,169,98,0.4), transparent),
+        radial-gradient(1px 1px at 110px 300px, rgba(255,255,255,0.3), transparent);
+    background-repeat: repeat;
+    background-size: 420px 420px;
+    animation: twinkle 8s ease-in-out infinite alternate-reverse, drift-b 150s linear infinite alternate;
+}
+
+@keyframes twinkle {
+    0%   { opacity: 0.5; }
+    50%  { opacity: 1; }
+    100% { opacity: 0.6; }
+}
+@keyframes drift-a {
+    0%   { transform: translate(0, 0); }
+    100% { transform: translate(-70px, -50px); }
+}
+@keyframes drift-b {
+    0%   { transform: translate(0, 0); }
+    100% { transform: translate(50px, 70px); }
+}
+
+.nav, .noise, .portal-hero, .portal-login-wrap, .portal-dashboard, .footer {
+    position: relative;
+    z-index: 1;
+}
+
+/* Radar-style sweep line across the hero */
 .portal-hero {
+    position: relative;
+    overflow: hidden;
     padding: 160px 24px 60px;
     text-align: center;
 }
 
-.portal-hero h1 {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: clamp(2.5rem, 8vw, 4.5rem);
-    letter-spacing: 0.08em;
-    color: var(--white);
+.portal-hero::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(201, 169, 98, 0.7), transparent);
+    box-shadow: 0 0 14px 1px rgba(201, 169, 98, 0.5);
+    animation: scan-sweep 7s ease-in-out infinite;
+    z-index: 2;
+    pointer-events: none;
+}
+
+@keyframes scan-sweep {
+    0%   { top: 0%; opacity: 0; }
+    8%   { opacity: 1; }
+    92%  { opacity: 1; }
+    100% { top: 100%; opacity: 0; }
+}
+
+/* Faint dashed orbit rings in the hero corners */
+.orbit-ring {
+    position: absolute;
+    border: 1px dashed rgba(201, 169, 98, 0.22);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 0;
+}
+.orbit-ring-1 {
+    width: 380px;
+    height: 380px;
+    top: -90px;
+    right: -110px;
+    animation: spin-slow 70s linear infinite;
+}
+.orbit-ring-2 {
+    width: 240px;
+    height: 240px;
+    bottom: -60px;
+    left: -70px;
+    animation: spin-slow-rev 90s linear infinite;
+    border-color: rgba(120, 150, 210, 0.2);
+}
+.orbit-ring-1::after,
+.orbit-ring-2::after {
+    content: '';
+    position: absolute;
+    top: -3px;
+    left: 50%;
+    width: 6px;
+    height: 6px;
+    margin-left: -3px;
+    border-radius: 50%;
+    background: var(--gold);
+    box-shadow: 0 0 8px 2px rgba(201, 169, 98, 0.7);
+}
+@keyframes spin-slow {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+@keyframes spin-slow-rev {
+    from { transform: rotate(360deg); }
+    to   { transform: rotate(0deg); }
+}
+
+/* Blinking status eyebrow tag */
+.mission-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.28rem;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 14px;
+}
+.mission-eyebrow::before {
+    content: '';
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--gold);
+    box-shadow: 0 0 8px 2px rgba(201, 169, 98, 0.7);
+    animation: pulse-dot 1.6s ease-in-out infinite;
+    flex-shrink: 0;
+}
+@keyframes pulse-dot {
+    0%, 100% { opacity: 0.4; transform: scale(0.8); }
+    50%      { opacity: 1; transform: scale(1.2); }
+}
+
+/* Word-by-word reveal animation for headlines */
+.reveal-word {
+    display: inline-block;
+    opacity: 0;
+    transform: translateY(26px);
+    filter: blur(4px);
+    animation: word-reveal 0.75s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+@keyframes word-reveal {
+    to { opacity: 1; transform: translateY(0); filter: blur(0); }
 }
 
 .portal-hero p {
+    position: relative;
+    z-index: 1;
     color: var(--light-gray);
     font-size: 0.85rem;
     letter-spacing: 0.05rem;
     margin-top: 10px;
+    opacity: 0;
+    animation: fade-up 0.8s ease forwards;
+    animation-delay: 0.65s;
+}
+
+@keyframes fade-up {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    body::before, body::after,
+    .portal-hero::before,
+    .orbit-ring, .orbit-ring-1, .orbit-ring-2,
+    .reveal-word, .portal-hero p {
+        animation: none !important;
+        opacity: 1 !important;
+        filter: none !important;
+        transform: none !important;
+    }
+}
+
+.portal-hero h1 {
+    position: relative;
+    z-index: 1;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(2.5rem, 8vw, 4.5rem);
+    letter-spacing: 0.08em;
+    color: var(--white);
 }
 
 /* ---------- Login gate ---------- */
@@ -34,11 +230,45 @@ body {
 }
 
 .portal-card {
+    position: relative;
     background: var(--dark);
     border: 1px solid var(--mid-gray);
     border-radius: 4px;
     padding: 40px 30px;
     text-align: center;
+}
+
+/* HUD-style targeting-reticle corners, echoed across the portal's cards */
+.portal-card::before, .portal-card::after,
+.practice-card::before, .practice-card::after,
+.note-card::before, .note-card::after,
+.session-card::before, .session-card::after,
+.portal-calendar-card::before, .portal-calendar-card::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--gold);
+    opacity: 0.45;
+    pointer-events: none;
+    z-index: 2;
+}
+.portal-card::before, .practice-card::before, .note-card::before,
+.session-card::before, .portal-calendar-card::before {
+    top: 8px;
+    left: 8px;
+    border-right: none;
+    border-bottom: none;
+}
+.portal-card::after, .practice-card::after, .note-card::after,
+.session-card::after, .portal-calendar-card::after {
+    bottom: 8px;
+    right: 8px;
+    border-left: none;
+    border-top: none;
+}
+.practice-card, .note-card, .session-card, .portal-calendar-card {
+    position: relative;
 }
 
 .portal-card h2 {

@@ -46,11 +46,14 @@
 
     <!-- Hero Section -->
     <section class="asvab-hero">
+        <div class="orbit-ring orbit-ring-1"></div>
+        <div class="orbit-ring orbit-ring-2"></div>
         <div class="hero-content">
-            <h1 class="hero-title">ASVAB PREP</h1>
+            <p class="mission-eyebrow">Mission: ASVAB Readiness</p>
+            <h1 class="hero-title" data-reveal>ASVAB PREP</h1>
             <p class="hero-subtitle">Everything you need to succeed and score well on the exam</p>
             <p class="hero-description">
-                Free study resources, live study sessions, and real guidance to help you succeed in passing the ASVAB 
+                Free study resources, live study sessions, and real guidance to help you succeed in passing the ASVAB
                 and reach your military goals.
             </p>
         </div>
@@ -109,7 +112,8 @@
     <!-- Member Portal CTA - full study materials, practice tests,
          flashcards and live sessions live behind member login -->
     <section class="study-materials-section">
-        <h2 class="section-title">THE FULL LIBRARY IS IN THE MEMBER PORTAL</h2>
+        <p class="mission-eyebrow" style="justify-content: center; display: flex;">Access Level: Member</p>
+        <h2 class="section-title" data-reveal>THE FULL LIBRARY IS IN THE MEMBER PORTAL</h2>
         <p style="text-align: center; color: var(--light-gray); max-width: 560px; margin: 0 auto 30px; line-height: 1.7;">
             Practice tests, flashcards, study notes, and live session sign-ups are all inside the member portal - free to join.
         </p>
@@ -236,6 +240,19 @@
         if (EMAILJS_READY && window.emailjs) {
             emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
         }
+
+        // ============================================
+        // WORD-BY-WORD REVEAL ANIMATION
+        // Splits any [data-reveal] headline into per-word spans with a
+        // staggered animation-delay, so the text flies/blurs in one word
+        // at a time on load (Space-Force-style headline treatment).
+        // ============================================
+        document.querySelectorAll('[data-reveal]').forEach(el => {
+            const words = el.textContent.trim().split(/\s+/);
+            el.innerHTML = words
+                .map((w, i) => `<span class="reveal-word" style="animation-delay:${(i * 0.12).toFixed(2)}s">${w}</span>`)
+                .join(' ');
+        });
 
         // ============================================
         // MODAL MANAGEMENT

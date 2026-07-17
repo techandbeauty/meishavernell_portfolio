@@ -45,7 +45,10 @@
 
     <!-- Hero -->
     <section class="portal-hero">
-        <h1>MEMBER PORTAL</h1>
+        <div class="orbit-ring orbit-ring-1"></div>
+        <div class="orbit-ring orbit-ring-2"></div>
+        <p class="mission-eyebrow" style="justify-content: center;">Status: Portal Online</p>
+        <h1 data-reveal>MEMBER PORTAL</h1>
         <p>Your exclusive perks, all in one place</p>
     </section>
 
@@ -149,6 +152,16 @@
     <script src="firebase-config.js"></script>
     <script>
         'use strict';
+
+        // ============================================
+        // WORD-BY-WORD REVEAL ANIMATION
+        // ============================================
+        document.querySelectorAll('[data-reveal]').forEach(el => {
+            const words = el.textContent.trim().split(/\s+/);
+            el.innerHTML = words
+                .map((w, i) => `<span class="reveal-word" style="animation-delay:${(i * 0.12).toFixed(2)}s">${w}</span>`)
+                .join(' ');
+        });
 
         const auth = firebase.auth();
         const db = firebase.firestore();
