@@ -70,6 +70,48 @@ body::after {
     z-index: 1;
 }
 
+/* ---------- Village background layer ----------
+   Hidden by default (military/starfield theme). Meisha uploads a photo
+   or video from the admin dashboard's Site Photos tab, and it shows here
+   full-bleed with a dark gradient over it for text legibility, whenever
+   a non-military portal section is active. */
+.village-bg-layer {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+}
+
+.village-bg-layer img,
+.village-bg-layer video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.village-bg-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(3,3,9,0.55) 0%, rgba(3,3,9,0.8) 100%);
+}
+
+body.theme-village .village-bg-layer {
+    display: block;
+}
+
+body.theme-village::before,
+body.theme-village::after {
+    display: none;
+}
+
+body.theme-village {
+    background-image: none;
+    background-color: #030309;
+}
+
 /* Radar-style sweep line across the hero */
 .portal-hero {
     position: relative;
@@ -409,7 +451,7 @@ body::after {
 .portal-dashboard {
     display: none;
     padding: 0 24px 100px;
-    max-width: 1100px;
+    max-width: 1200px;
     margin: 0 auto;
 }
 
@@ -417,24 +459,89 @@ body::after {
     display: block;
 }
 
-.portal-greeting {
+.portal-shell {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 16px;
-    margin-bottom: 40px;
-    padding-bottom: 20px;
+    align-items: flex-start;
+    gap: 36px;
+}
+
+/* ---------- Sidebar (desktop) ---------- */
+
+.portal-sidebar {
+    width: 230px;
+    flex-shrink: 0;
+    position: sticky;
+    top: 100px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.portal-sidebar-top {
+    padding-bottom: 16px;
     border-bottom: 1px solid var(--dark-gray);
 }
 
-.portal-greeting h2 {
+.portal-sidebar-top h2 {
     font-family: 'Cormorant Garamond', serif;
-    font-size: 1.6rem;
+    font-size: 1.4rem;
     color: var(--white);
 }
 
+.portal-sidebar-sub {
+    font-size: 0.65rem;
+    letter-spacing: 0.12rem;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-top: 6px;
+}
+
+.portal-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.portal-nav-group-label {
+    font-size: 0.6rem;
+    letter-spacing: 0.12rem;
+    text-transform: uppercase;
+    color: var(--mid-gray);
+    margin: 16px 0 4px;
+}
+
+.portal-nav-group-label:first-child {
+    margin-top: 0;
+}
+
+.portal-nav-btn {
+    text-align: left;
+    background: transparent;
+    border: none;
+    border-left: 2px solid transparent;
+    color: var(--light-gray);
+    padding: 10px 12px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.78rem;
+    letter-spacing: 0.02rem;
+    cursor: pointer;
+    border-radius: 0 3px 3px 0;
+    transition: all 0.2s ease;
+}
+
+.portal-nav-btn:hover {
+    color: var(--white);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.portal-nav-btn.active {
+    color: var(--gold);
+    border-left-color: var(--gold);
+    background: rgba(201, 169, 98, 0.08);
+}
+
 .portal-signout-btn {
+    align-self: flex-start;
     background: transparent;
     border: 1px solid var(--mid-gray);
     color: var(--light-gray);
@@ -452,34 +559,17 @@ body::after {
     color: var(--gold);
 }
 
-.portal-tabs {
-    display: flex;
-    gap: 8px;
-    overflow-x: auto;
-    margin-bottom: 32px;
-    -webkit-overflow-scrolling: touch;
+/* ---------- Mobile nav (dropdown, hidden on desktop) ---------- */
+
+.portal-mobile-nav {
+    display: none;
 }
 
-.portal-tab-btn {
-    flex-shrink: 0;
-    background: var(--dark);
-    border: 1px solid var(--dark-gray);
-    color: var(--light-gray);
-    padding: 12px 20px;
-    font-family: 'Montserrat', sans-serif;
-    font-size: 0.7rem;
-    letter-spacing: 0.08rem;
-    text-transform: uppercase;
-    cursor: pointer;
-    border-radius: 3px;
-    transition: all 0.3s ease;
-    white-space: nowrap;
-}
+/* ---------- Main content ---------- */
 
-.portal-tab-btn.active,
-.portal-tab-btn:hover {
-    border-color: var(--gold);
-    color: var(--gold);
+.portal-main {
+    flex: 1;
+    min-width: 0;
 }
 
 .portal-tab-content {
@@ -488,6 +578,34 @@ body::after {
 
 .portal-tab-content.active {
     display: block;
+}
+
+@media (max-width: 900px) {
+    .portal-shell {
+        flex-direction: column;
+        gap: 0;
+    }
+
+    .portal-sidebar {
+        display: none;
+    }
+
+    .portal-mobile-nav {
+        display: block;
+        width: 100%;
+        padding: 14px 16px;
+        background: var(--dark);
+        border: 1px solid var(--mid-gray);
+        color: var(--white);
+        font-family: 'Montserrat', sans-serif;
+        font-size: 0.8rem;
+        border-radius: 3px;
+        margin-bottom: 28px;
+    }
+
+    .portal-main {
+        width: 100%;
+    }
 }
 
 .portal-filters {
@@ -884,5 +1002,184 @@ body::after {
     }
     .session-reserve-btn {
         width: 100%;
+    }
+}
+
+/* ---------- Messages (DM with Meisha) ---------- */
+
+.portal-dm-card {
+    background: rgba(10, 10, 10, 0.6);
+    border: 1px solid var(--dark-gray);
+    border-radius: 4px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    height: 520px;
+    max-height: 70vh;
+}
+
+.portal-dm-thread {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-right: 6px;
+    margin-bottom: 14px;
+}
+
+.portal-dm-bubble {
+    max-width: 75%;
+    padding: 10px 14px;
+    border-radius: 12px;
+    font-size: 0.82rem;
+    line-height: 1.5;
+    word-break: break-word;
+}
+
+.portal-dm-bubble p {
+    margin: 0;
+}
+
+.portal-dm-bubble.from-member {
+    align-self: flex-end;
+    background: var(--gold);
+    color: var(--black);
+    border-bottom-right-radius: 3px;
+}
+
+.portal-dm-bubble.from-admin {
+    align-self: flex-start;
+    background: var(--dark-gray);
+    color: var(--white);
+    border: 1px solid var(--mid-gray);
+    border-bottom-left-radius: 3px;
+}
+
+.portal-dm-empty {
+    color: var(--light-gray);
+    font-size: 0.8rem;
+    text-align: center;
+    margin: auto;
+    padding: 20px;
+}
+
+.portal-dm-form {
+    display: flex;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.portal-dm-form textarea {
+    flex: 1;
+    resize: none;
+    height: 46px;
+    padding: 12px 14px;
+    background: var(--dark-gray);
+    border: 1px solid var(--mid-gray);
+    color: var(--white);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 0.82rem;
+    border-radius: 3px;
+}
+
+.portal-dm-form textarea:focus {
+    outline: none;
+    border-color: var(--gold);
+}
+
+.portal-dm-form .portal-btn {
+    width: auto;
+    padding: 0 24px;
+    flex-shrink: 0;
+}
+
+/* ---------- Support / Donate ---------- */
+
+.portal-donate-card {
+    max-width: 520px;
+    background: rgba(10, 10, 10, 0.6);
+    border: 1px solid var(--dark-gray);
+    border-radius: 4px;
+    padding: 40px 34px;
+    position: relative;
+}
+
+.portal-donate-card h3 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.5rem;
+    color: var(--white);
+    margin-bottom: 14px;
+}
+
+.portal-donate-copy {
+    color: var(--light-gray);
+    font-size: 0.85rem;
+    line-height: 1.7;
+    margin-bottom: 26px;
+}
+
+.portal-donate-btn {
+    width: auto;
+    display: inline-block;
+    padding: 14px 32px;
+    text-decoration: none;
+    text-align: center;
+}
+
+/* ---------- Settings ---------- */
+
+.portal-settings-form {
+    max-width: 460px;
+}
+
+.portal-settings-field {
+    margin-bottom: 18px;
+}
+
+.portal-settings-field label {
+    display: block;
+    font-size: 0.7rem;
+    letter-spacing: 0.08rem;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 8px;
+}
+
+.portal-settings-toggles {
+    margin: 28px 0;
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--dark-gray);
+    border-radius: 4px;
+}
+
+.portal-settings-toggles-label {
+    font-size: 0.75rem;
+    color: var(--light-gray);
+    margin-bottom: 14px;
+}
+
+.portal-toggle-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.82rem;
+    color: var(--white);
+    padding: 8px 0;
+    cursor: pointer;
+}
+
+.portal-toggle-row input {
+    width: auto;
+    accent-color: var(--gold);
+}
+
+@media (max-width: 640px) {
+    .portal-dm-card {
+        height: 460px;
+    }
+    .portal-donate-card {
+        padding: 30px 22px;
     }
 }

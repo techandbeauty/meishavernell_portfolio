@@ -23,6 +23,10 @@
 <body>
     <div class="noise"></div>
 
+    <!-- Village background layer (photo/video Meisha uploads from the
+         admin dashboard). Hidden unless a non-military section is active. -->
+    <div class="village-bg-layer" id="villageBgLayer" aria-hidden="true"></div>
+
     <!-- Navigation -->
     <nav class="nav" id="nav">
         <div class="nav-links" id="navLinks">
@@ -113,39 +117,137 @@
 
     <!-- Dashboard (shown once signed in) -->
     <div class="portal-dashboard" id="portalDashboard">
-        <div class="portal-greeting">
-            <h2 id="portalGreeting">Welcome</h2>
-            <button class="portal-signout-btn" id="signOutBtn">Sign Out</button>
-        </div>
+        <div class="portal-shell">
 
-        <div class="portal-tabs">
-            <button class="portal-tab-btn active" data-tab="practice">Practice Tests</button>
-            <button class="portal-tab-btn" data-tab="flashcards">Flashcards</button>
-            <button class="portal-tab-btn" data-tab="notes">Study Notes</button>
-            <button class="portal-tab-btn" data-tab="sessions">Live Sessions</button>
-        </div>
+            <!-- Sidebar (desktop) -->
+            <aside class="portal-sidebar">
+                <div class="portal-sidebar-top">
+                    <h2 id="portalGreeting">Welcome</h2>
+                    <p class="portal-sidebar-sub">Member Portal</p>
+                </div>
 
-        <!-- Practice Tests -->
-        <div class="portal-tab-content active" id="practice-tab">
-            <div class="portal-filters" id="practiceFilters"></div>
-            <div id="practiceList"><div class="portal-loading">Loading practice tests…</div></div>
-        </div>
+                <nav class="portal-nav" id="portalNav">
+                    <p class="portal-nav-group-label">ASVAB / Military</p>
+                    <button class="portal-nav-btn active" data-section="practice" data-pref="showPractice">Practice Tests</button>
+                    <button class="portal-nav-btn" data-section="flashcards" data-pref="showFlashcards">Flashcards</button>
+                    <button class="portal-nav-btn" data-section="notes" data-pref="showNotes">Study Notes</button>
+                    <button class="portal-nav-btn" data-section="sessions" data-pref="showSessions">Live Sessions</button>
 
-        <!-- Flashcards -->
-        <div class="portal-tab-content" id="flashcards-tab">
-            <div class="portal-filters" id="flashcardFilters"></div>
-            <div class="flashcard-grid" id="flashcardList"><div class="portal-loading">Loading flashcards…</div></div>
-        </div>
+                    <p class="portal-nav-group-label">The Village</p>
+                    <button class="portal-nav-btn" data-section="village" data-pref="showVillage">The Village</button>
+                    <button class="portal-nav-btn" data-section="messages" data-pref="showMessages">Messages</button>
+                    <button class="portal-nav-btn" data-section="donate" data-pref="showDonate">Support / Donate</button>
 
-        <!-- Study Notes -->
-        <div class="portal-tab-content" id="notes-tab">
-            <div class="portal-filters" id="notesFilters"></div>
-            <div id="notesList"><div class="portal-loading">Loading study notes…</div></div>
-        </div>
+                    <p class="portal-nav-group-label">Account</p>
+                    <button class="portal-nav-btn" data-section="settings">Settings</button>
+                </nav>
 
-        <!-- Live Sessions -->
-        <div class="portal-tab-content" id="sessions-tab">
-            <div id="sessionsList"><div class="portal-loading">Loading sessions…</div></div>
+                <button class="portal-signout-btn" id="signOutBtn">Sign Out</button>
+            </aside>
+
+            <!-- Nav (mobile) -->
+            <select class="portal-mobile-nav" id="portalMobileNav">
+                <optgroup label="ASVAB / Military">
+                    <option value="practice" data-pref="showPractice">Practice Tests</option>
+                    <option value="flashcards" data-pref="showFlashcards">Flashcards</option>
+                    <option value="notes" data-pref="showNotes">Study Notes</option>
+                    <option value="sessions" data-pref="showSessions">Live Sessions</option>
+                </optgroup>
+                <optgroup label="The Village">
+                    <option value="village" data-pref="showVillage">The Village</option>
+                    <option value="messages" data-pref="showMessages">Messages</option>
+                    <option value="donate" data-pref="showDonate">Support / Donate</option>
+                </optgroup>
+                <optgroup label="Account">
+                    <option value="settings">Settings</option>
+                </optgroup>
+            </select>
+
+            <main class="portal-main">
+
+                <!-- Practice Tests -->
+                <div class="portal-tab-content active" id="practice-tab" data-section-content="practice">
+                    <div class="portal-filters" id="practiceFilters"></div>
+                    <div id="practiceList"><div class="portal-loading">Loading practice tests…</div></div>
+                </div>
+
+                <!-- Flashcards -->
+                <div class="portal-tab-content" id="flashcards-tab" data-section-content="flashcards">
+                    <div class="portal-filters" id="flashcardFilters"></div>
+                    <div class="flashcard-grid" id="flashcardList"><div class="portal-loading">Loading flashcards…</div></div>
+                </div>
+
+                <!-- Study Notes -->
+                <div class="portal-tab-content" id="notes-tab" data-section-content="notes">
+                    <div class="portal-filters" id="notesFilters"></div>
+                    <div id="notesList"><div class="portal-loading">Loading study notes…</div></div>
+                </div>
+
+                <!-- Live Sessions -->
+                <div class="portal-tab-content" id="sessions-tab" data-section-content="sessions">
+                    <div id="sessionsList"><div class="portal-loading">Loading sessions…</div></div>
+                </div>
+
+                <!-- The Village -->
+                <div class="portal-tab-content" id="village-tab" data-section-content="village">
+                    <div id="villageContent"></div>
+                </div>
+
+                <!-- Messages -->
+                <div class="portal-tab-content" id="messages-tab" data-section-content="messages">
+                    <div class="portal-dm-card">
+                        <div class="portal-dm-thread" id="dmThread"><div class="portal-loading">Loading messages…</div></div>
+                        <form class="portal-dm-form" id="dmForm">
+                            <textarea id="dmInput" placeholder="Message Meisha..." required></textarea>
+                            <button type="submit" class="portal-btn" id="dmSendBtn">Send</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Support / Donate -->
+                <div class="portal-tab-content" id="donate-tab" data-section-content="donate">
+                    <div class="portal-donate-card">
+                        <p class="mission-eyebrow">Support the Village</p>
+                        <h3>Help keep this work going.</h3>
+                        <p class="portal-donate-copy">
+                            Every contribution helps fund free ASVAB prep, live sessions, and everything else built
+                            here. Checkout is secure and handled entirely by Stripe - card, Apple Pay, and Cash App
+                            Pay are all supported. You choose the amount on the next screen.
+                        </p>
+                        <a class="portal-btn portal-donate-btn" id="donateBtn" href="#" target="_blank" rel="noopener">Donate Securely</a>
+                    </div>
+                </div>
+
+                <!-- Settings -->
+                <div class="portal-tab-content" id="settings-tab" data-section-content="settings">
+                    <form class="portal-settings-form" id="settingsForm">
+                        <div class="portal-error" id="settingsStatus"></div>
+
+                        <div class="portal-settings-field">
+                            <label for="settingsName">Full Name</label>
+                            <input type="text" class="portal-input" id="settingsName" placeholder="Full Name">
+                        </div>
+                        <div class="portal-settings-field">
+                            <label for="settingsPhone">Phone Number</label>
+                            <input type="tel" class="portal-input" id="settingsPhone" placeholder="(555) 555-5555">
+                        </div>
+
+                        <div class="portal-settings-toggles">
+                            <p class="portal-settings-toggles-label">What do you want to see in your portal?</p>
+                            <label class="portal-toggle-row"><input type="checkbox" id="prefShowPractice"> Practice Tests</label>
+                            <label class="portal-toggle-row"><input type="checkbox" id="prefShowFlashcards"> Flashcards</label>
+                            <label class="portal-toggle-row"><input type="checkbox" id="prefShowNotes"> Study Notes</label>
+                            <label class="portal-toggle-row"><input type="checkbox" id="prefShowSessions"> Live Sessions</label>
+                            <label class="portal-toggle-row"><input type="checkbox" id="prefShowVillage"> The Village</label>
+                            <label class="portal-toggle-row"><input type="checkbox" id="prefShowMessages"> Messages</label>
+                            <label class="portal-toggle-row"><input type="checkbox" id="prefShowDonate"> Support / Donate</label>
+                        </div>
+
+                        <button type="submit" class="portal-btn" id="settingsSaveBtn">Save Settings</button>
+                    </form>
+                </div>
+
+            </main>
         </div>
     </div>
 
@@ -162,6 +264,17 @@
                 .map((w, i) => `<span class="reveal-word" style="animation-delay:${(i * 0.12).toFixed(2)}s">${w}</span>`)
                 .join(' ');
         });
+
+        // ============================================
+        // CONFIG
+        // ============================================
+        const CLOUDINARY_CLOUD_NAME = 'didqb05ko';
+
+        // Fill this in with your Stripe Payment Link once it's created
+        // (see the setup steps Claude gave you). Until then the Donate
+        // button will show a friendly "not set up yet" message instead
+        // of a broken link.
+        const STRIPE_PAYMENT_LINK = 'YOUR_STRIPE_PAYMENT_LINK';
 
         const auth = firebase.auth();
         const db = firebase.firestore();
@@ -349,6 +462,16 @@
         // ============================================
         // AUTH STATE -> show login gate or dashboard
         // ============================================
+        const DEFAULT_PREFERENCES = {
+            showPractice: true,
+            showFlashcards: true,
+            showNotes: true,
+            showSessions: true,
+            showVillage: true,
+            showMessages: true,
+            showDonate: true
+        };
+
         async function ensureMemberProfile(user) {
             const ref = db.collection('members').doc(user.uid);
             const snap = await ref.get();
@@ -359,7 +482,11 @@
                 lastLogin: firebase.firestore.FieldValue.serverTimestamp()
             };
             if (pendingName) data.fullName = pendingName;
-            if (!snap.exists) data.joinedAt = firebase.firestore.FieldValue.serverTimestamp();
+            if (!snap.exists) {
+                data.joinedAt = firebase.firestore.FieldValue.serverTimestamp();
+                data.phone = '';
+                data.preferences = DEFAULT_PREFERENCES;
+            }
 
             await ref.set(data, { merge: true });
             window.localStorage.removeItem('mvPendingName');
@@ -375,10 +502,16 @@
                 const profile = await ensureMemberProfile(user);
                 document.getElementById('portalGreeting').textContent =
                     `Welcome, ${(profile.fullName || user.email).split(' ')[0]}`;
+
+                populateSettingsForm(profile);
+                applyPreferences(profile.preferences || DEFAULT_PREFERENCES);
+
                 loadPracticeTests();
                 loadFlashcards();
                 loadStudyNotes();
                 loadLiveSessions(user.uid, user.email);
+                loadVillageBackground();
+                loadDmThread(user.uid);
             } else {
                 dashboard.classList.remove('show');
                 loginWrap.style.display = 'block';
@@ -388,16 +521,246 @@
         });
 
         // ============================================
-        // TABS
+        // SIDEBAR NAV + SECTION SWITCHING + DUAL THEMING
+        // Military/ASVAB sections keep the starfield/HUD theme built
+        // earlier. Everything else (Village, Messages, Donate, Settings)
+        // switches to Meisha's uploaded photo/video background.
         // ============================================
-        document.querySelectorAll('.portal-tab-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.portal-tab-btn').forEach(b => b.classList.remove('active'));
-                document.querySelectorAll('.portal-tab-content').forEach(t => t.classList.remove('active'));
-                btn.classList.add('active');
-                document.getElementById(`${btn.dataset.tab}-tab`).classList.add('active');
-            });
+        const MILITARY_SECTIONS = ['practice', 'flashcards', 'notes', 'sessions'];
+
+        function setTheme(section) {
+            const isVillage = !MILITARY_SECTIONS.includes(section);
+            document.body.classList.toggle('theme-village', isVillage);
+            document.body.classList.toggle('theme-military', !isVillage);
+        }
+
+        function setActiveSection(section) {
+            document.querySelectorAll('.portal-nav-btn').forEach(b => b.classList.toggle('active', b.dataset.section === section));
+            document.querySelectorAll('.portal-tab-content').forEach(t => t.classList.toggle('active', t.dataset.sectionContent === section));
+            const mobileNav = document.getElementById('portalMobileNav');
+            if (mobileNav.value !== section) mobileNav.value = section;
+            setTheme(section);
+        }
+
+        document.querySelectorAll('.portal-nav-btn').forEach(btn => {
+            btn.addEventListener('click', () => setActiveSection(btn.dataset.section));
         });
+        document.getElementById('portalMobileNav').addEventListener('change', (e) => setActiveSection(e.target.value));
+
+        // ============================================
+        // PREFERENCES - hide nav items/options a member has turned off,
+        // and bounce off a section that just got hidden.
+        // ============================================
+        function applyPreferences(prefs) {
+            document.querySelectorAll('.portal-nav-btn[data-pref]').forEach(btn => {
+                btn.style.display = prefs[btn.dataset.pref] === false ? 'none' : '';
+            });
+            document.querySelectorAll('#portalMobileNav option[data-pref]').forEach(opt => {
+                opt.disabled = prefs[opt.dataset.pref] === false;
+            });
+
+            const activeBtn = document.querySelector('.portal-nav-btn.active');
+            const activeHidden = activeBtn && activeBtn.dataset.pref && prefs[activeBtn.dataset.pref] === false;
+            if (activeHidden) {
+                const fallback = Array.from(document.querySelectorAll('.portal-nav-btn'))
+                    .find(b => b.style.display !== 'none');
+                if (fallback) setActiveSection(fallback.dataset.section);
+            }
+        }
+
+        // ============================================
+        // SETTINGS - name, phone, per-feature preference toggles
+        // ============================================
+        function populateSettingsForm(profile) {
+            document.getElementById('settingsName').value = profile.fullName || '';
+            document.getElementById('settingsPhone').value = profile.phone || '';
+            const prefs = { ...DEFAULT_PREFERENCES, ...(profile.preferences || {}) };
+            document.getElementById('prefShowPractice').checked = prefs.showPractice;
+            document.getElementById('prefShowFlashcards').checked = prefs.showFlashcards;
+            document.getElementById('prefShowNotes').checked = prefs.showNotes;
+            document.getElementById('prefShowSessions').checked = prefs.showSessions;
+            document.getElementById('prefShowVillage').checked = prefs.showVillage;
+            document.getElementById('prefShowMessages').checked = prefs.showMessages;
+            document.getElementById('prefShowDonate').checked = prefs.showDonate;
+        }
+
+        document.getElementById('settingsForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const user = auth.currentUser;
+            if (!user) return;
+
+            const btn = document.getElementById('settingsSaveBtn');
+            btn.disabled = true;
+            btn.textContent = 'Saving…';
+
+            const fullName = document.getElementById('settingsName').value.trim();
+            const preferences = {
+                showPractice: document.getElementById('prefShowPractice').checked,
+                showFlashcards: document.getElementById('prefShowFlashcards').checked,
+                showNotes: document.getElementById('prefShowNotes').checked,
+                showSessions: document.getElementById('prefShowSessions').checked,
+                showVillage: document.getElementById('prefShowVillage').checked,
+                showMessages: document.getElementById('prefShowMessages').checked,
+                showDonate: document.getElementById('prefShowDonate').checked
+            };
+
+            const statusBox = document.getElementById('settingsStatus');
+
+            try {
+                await db.collection('members').doc(user.uid).set({
+                    fullName,
+                    phone: document.getElementById('settingsPhone').value.trim(),
+                    preferences
+                }, { merge: true });
+
+                applyPreferences(preferences);
+                if (fullName) {
+                    document.getElementById('portalGreeting').textContent = `Welcome, ${fullName.split(' ')[0]}`;
+                }
+
+                statusBox.style.background = 'rgba(90,170,100,0.15)';
+                statusBox.style.borderColor = 'rgba(90,170,100,0.4)';
+                statusBox.style.color = '#8fce9a';
+                statusBox.textContent = '✓ Settings saved';
+                statusBox.classList.add('show');
+                setTimeout(() => statusBox.classList.remove('show'), 3000);
+            } catch (err) {
+                console.error(err);
+                statusBox.style.background = '';
+                statusBox.style.borderColor = '';
+                statusBox.style.color = '';
+                statusBox.textContent = `Error: ${err.message}`;
+                statusBox.classList.add('show');
+            }
+
+            btn.disabled = false;
+            btn.textContent = 'Save Settings';
+        });
+
+        // ============================================
+        // THE VILLAGE (placeholder - Meisha adds real content later,
+        // no code changes needed)
+        // ============================================
+        document.getElementById('villageContent').innerHTML = renderComingSoon({
+            watermark: 'VILLAGE',
+            eyebrow: 'The Village',
+            title: "This is your space in Meisha's world.",
+            sub: 'Life updates, behind-the-scenes moments, and community content are coming here soon.'
+        });
+
+        // ============================================
+        // VILLAGE BACKGROUND (photo or video Meisha uploads from the
+        // admin dashboard's Site Photos tab)
+        // ============================================
+        async function loadVillageBackground() {
+            const layer = document.getElementById('villageBgLayer');
+            try {
+                const [imgRes, vidRes] = await Promise.all([
+                    fetch(`https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/list/mv-village-bg.json?_=${Date.now()}`),
+                    fetch(`https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/video/list/mv-village-bg.json?_=${Date.now()}`)
+                ]);
+                const imgData = await imgRes.json().catch(() => ({ resources: [] }));
+                const vidData = await vidRes.json().catch(() => ({ resources: [] }));
+
+                if (vidData.resources && vidData.resources.length) {
+                    const r = vidData.resources[0];
+                    layer.innerHTML = `<video autoplay muted loop playsinline src="https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/video/upload/q_auto/${r.public_id}.${r.format}"></video><div class="village-bg-overlay"></div>`;
+                } else if (imgData.resources && imgData.resources.length) {
+                    const r = imgData.resources[0];
+                    layer.innerHTML = `<img src="https://res.cloudinary.com/${CLOUDINARY_CLOUD_NAME}/image/upload/q_auto,f_auto/${r.public_id}.${r.format}" alt=""><div class="village-bg-overlay"></div>`;
+                }
+            } catch (err) {
+                console.log('No Village background set yet (safe to ignore):', err.message);
+            }
+        }
+
+        // ============================================
+        // MESSAGES - a simple DM thread between this member and Meisha
+        // ============================================
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str || '';
+            return div.innerHTML;
+        }
+
+        let dmUnsubscribe = null;
+
+        function loadDmThread(uid) {
+            const threadEl = document.getElementById('dmThread');
+            if (dmUnsubscribe) dmUnsubscribe();
+
+            dmUnsubscribe = db.collection('dmThreads').doc(uid).collection('messages')
+                .orderBy('sentAt', 'asc')
+                .onSnapshot(snap => {
+                    const messages = snap.docs.map(d => d.data());
+                    if (messages.length === 0) {
+                        threadEl.innerHTML = '<div class="portal-dm-empty">Say hello! Messages you send here go straight to Meisha.</div>';
+                        return;
+                    }
+                    threadEl.innerHTML = messages.map(m => `
+                        <div class="portal-dm-bubble ${m.sender === 'admin' ? 'from-admin' : 'from-member'}">
+                            <p>${escapeHtml(m.text)}</p>
+                        </div>
+                    `).join('');
+                    threadEl.scrollTop = threadEl.scrollHeight;
+                }, err => {
+                    console.error(err);
+                    threadEl.innerHTML = '<div class="portal-empty">Could not load messages.</div>';
+                });
+        }
+
+        document.getElementById('dmForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const user = auth.currentUser;
+            if (!user) return;
+
+            const input = document.getElementById('dmInput');
+            const text = input.value.trim();
+            if (!text) return;
+
+            const btn = document.getElementById('dmSendBtn');
+            btn.disabled = true;
+
+            try {
+                const threadRef = db.collection('dmThreads').doc(user.uid);
+                const greetingName = (document.getElementById('portalGreeting').textContent || '').replace('Welcome, ', '');
+
+                await threadRef.set({
+                    memberName: greetingName,
+                    memberEmail: user.email,
+                    lastMessageText: text,
+                    lastMessageAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    unreadByAdmin: true
+                }, { merge: true });
+
+                await threadRef.collection('messages').add({
+                    sender: 'member',
+                    text,
+                    sentAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                input.value = '';
+            } catch (err) {
+                console.error(err);
+                alert('Could not send message: ' + err.message);
+            }
+
+            btn.disabled = false;
+        });
+
+        // ============================================
+        // DONATE - opens Meisha's Stripe Payment Link (handles card,
+        // Apple Pay, and Cash App Pay - no backend needed on this site)
+        // ============================================
+        const donateBtn = document.getElementById('donateBtn');
+        if (STRIPE_PAYMENT_LINK && STRIPE_PAYMENT_LINK !== 'YOUR_STRIPE_PAYMENT_LINK') {
+            donateBtn.href = STRIPE_PAYMENT_LINK;
+        } else {
+            donateBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                alert("Donations aren't set up yet - check back soon!");
+            });
+        }
 
         // ============================================
         // COMING SOON (inline empty state, matches the site's

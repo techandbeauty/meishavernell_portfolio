@@ -625,6 +625,7 @@
             <button class="tab-btn" data-tab="flashcards">Flashcards</button>
             <button class="tab-btn" data-tab="notes">Study Notes</button>
             <button class="tab-btn" data-tab="sessions">Live Sessions</button>
+            <button class="tab-btn" data-tab="messages">Messages</button>
         </div>
 
         <!-- Tabs (mobile dropdown) -->
@@ -635,6 +636,7 @@
             <option value="flashcards">Flashcards</option>
             <option value="notes">Study Notes</option>
             <option value="sessions">Live Sessions</option>
+            <option value="messages">Messages</option>
         </select>
 
         <!-- Gallery Tab -->
@@ -728,6 +730,7 @@
                                 <option value="apps-marc">Apps Page - MARC icon</option>
                                 <option value="apps-asvab">Apps Page - ASVAB background</option>
                                 <option value="portfolio">Portfolio - project photo/video</option>
+                                <option value="village-background">Member Portal - "The Village" background photo/video</option>
                             </select>
                             <p style="font-size: 0.7rem; color: var(--light-gray); margin-top: 6px;">
                                 "Hero Slideshow" and "Portfolio" add a new item each time. Every other option replaces what's currently there.
@@ -1009,6 +1012,31 @@
                 <div id="sessionItems"></div>
             </div>
         </div>
+
+        <!-- Messages Tab (Portal DMs) -->
+        <div class="tab-content" id="messages-tab">
+            <div class="content-section" style="display: flex; gap: 20px; align-items: flex-start; flex-wrap: wrap;">
+                <div style="flex: 1; min-width: 240px;">
+                    <h2 class="section-title">Conversations</h2>
+                    <div class="loading" id="dmThreadListLoading">Loading conversations...</div>
+                    <div id="dmThreadList"></div>
+                </div>
+
+                <div style="flex: 2; min-width: 280px;">
+                    <h2 class="section-title" id="dmActiveName">Select a conversation</h2>
+                    <div id="dmActiveThread" style="background: var(--dark-gray); border: 1px solid var(--mid-gray); padding: 16px; height: 400px; overflow-y: auto; margin-bottom: 14px; display: flex; flex-direction: column; gap: 10px;">
+                        <p style="color: var(--light-gray); font-size: 0.85rem; text-align: center; margin: auto;">Pick a conversation on the left to view it.</p>
+                    </div>
+                    <form id="dmReplyForm" style="display: none; gap: 10px;">
+                        <div class="status-message" id="dmReplyStatus"></div>
+                        <div style="display: flex; gap: 10px;">
+                            <textarea id="dmReplyInput" placeholder="Type your reply..." required style="flex: 1; min-height: 46px; padding: 12px; background: var(--black); border: 1px solid var(--mid-gray); color: var(--white); font-family: 'Montserrat', sans-serif; font-size: 0.85rem;"></textarea>
+                            <button type="submit" class="btn" id="dmReplyBtn" style="width: auto; padding: 0 24px;">SEND</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Firebase Config & JS -->
@@ -1042,13 +1070,14 @@
             dashboardContainer.style.display = 'block';
             loadGalleryCategories().then(loadGalleryPhotos);
             loadSiteMedia();
-            seedDefaultAsvabContent().then(() => {
+            Promise.all([seedDefaultAsvabContent(), seedContentPack2()]).then(() => {
                 loadPracticeQuestions();
                 loadFlashcards();
                 loadNotes();
             });
             loadSessions();
             loadSessionRequests();
+            loadDmThreadList();
         }
 
         loginForm.addEventListener('submit', async (e) => {
@@ -1373,7 +1402,8 @@
             'apps-praxis':    { label: 'Apps - Praxis icon',       tag: 'mv-app-praxis',     resourceType: 'image', publicId: 'mv-app-praxis' },
             'apps-marc':      { label: 'Apps - MARC icon',         tag: 'mv-app-marc',       resourceType: 'image', publicId: 'mv-app-marc' },
             'apps-asvab':     { label: 'Apps - ASVAB background',  tag: 'mv-app-asvab',      resourceType: 'image', publicId: 'mv-app-asvab' },
-            'portfolio':      { label: 'Portfolio',                tag: 'mv-portfolio',      resourceType: 'auto' }
+            'portfolio':      { label: 'Portfolio',                tag: 'mv-portfolio',      resourceType: 'auto' },
+            'village-background': { label: 'Portal - The Village background', tag: 'mv-village-bg', resourceType: 'auto', publicId: 'mv-village-bg' }
         };
 
         const siteMediaDestination = document.getElementById('siteMediaDestination');
@@ -1682,6 +1712,89 @@
                 batch.set(ref, mapFn(item));
             });
             await batch.commit();
+        }
+
+        // ============================================
+        // CONTENT PACK #2 - subject-focused batch (5 flashcards each in
+        // Math/Science/Word Knowledge, plus a 10/6/8-question practice
+        // set in Math/Science/Reading). Uses a marker doc instead of an
+        // "empty collection" check, so it safely loads exactly once even
+        // though the collections already have the first seeded batch.
+        // ============================================
+        const CONTENT_PACK_2_FLASHCARDS = [
+            // Mathematics (5)
+            { subject: 'Mathematics Knowledge', front: 'Order of Operations', back: 'PEMDAS: Parentheses, Exponents, Multiplication/Division (left to right), Addition/Subtraction (left to right)' },
+            { subject: 'Mathematics Knowledge', front: 'Slope Formula', back: 'm = (y₂ − y₁) / (x₂ − x₁)' },
+            { subject: 'Mathematics Knowledge', front: 'Perimeter of a Rectangle', back: 'P = 2(length + width)' },
+            { subject: 'Mathematics Knowledge', front: 'Fraction to Percent', back: 'Divide the numerator by the denominator, then multiply by 100' },
+            { subject: 'Mathematics Knowledge', front: 'Simple Interest Formula', back: 'I = P × R × T (Principal × Rate × Time)' },
+            // General Science (5)
+            { subject: 'General Science', front: 'States of Matter', back: 'Solid, liquid, gas, and plasma - determined by how tightly packed particles are and how much energy they have' },
+            { subject: 'General Science', front: "Newton's First Law", back: 'An object at rest stays at rest, and an object in motion stays in motion, unless acted on by an outside force' },
+            { subject: 'General Science', front: 'The Water Cycle', back: 'Evaporation → Condensation → Precipitation → Collection' },
+            { subject: 'General Science', front: 'Atoms Are Made Of', back: 'Protons (positive), neutrons (neutral), and electrons (negative)' },
+            { subject: 'General Science', front: 'Red Blood Cells', back: 'Carry oxygen from the lungs to the rest of the body' },
+            // Word Knowledge (5)
+            { subject: 'Word Knowledge', front: 'Ambiguous', back: 'Open to more than one interpretation; unclear or uncertain' },
+            { subject: 'Word Knowledge', front: 'Diligent', back: 'Showing careful and persistent effort in work' },
+            { subject: 'Word Knowledge', front: 'Feasible', back: 'Possible to do easily or conveniently' },
+            { subject: 'Word Knowledge', front: 'Skeptical', back: 'Having doubts; not easily convinced' },
+            { subject: 'Word Knowledge', front: 'Novice', back: 'A person new to or inexperienced in a skill or activity' }
+        ];
+
+        const CONTENT_PACK_2_PRACTICE = [
+            // Mathematics Knowledge (10)
+            { subject: 'Mathematics Knowledge', question: 'What is 7² (7 squared)?', choices: ['14', '49', '21', '77'], correctIndex: 1, explanation: '7² means 7 × 7 = 49.' },
+            { subject: 'Mathematics Knowledge', question: 'Solve for x: 2x − 4 = 10', choices: ['3', '5', '7', '9'], correctIndex: 2, explanation: '2x = 10 + 4 = 14, so x = 7.' },
+            { subject: 'Mathematics Knowledge', question: 'What is the least common multiple (LCM) of 4 and 6?', choices: ['8', '10', '12', '24'], correctIndex: 2, explanation: '12 is the smallest number divisible by both 4 and 6.' },
+            { subject: 'Mathematics Knowledge', question: 'Convert 0.75 to a fraction in lowest terms.', choices: ['3/4', '7/10', '3/5', '4/5'], correctIndex: 0, explanation: '0.75 = 75/100 = 3/4 in lowest terms.' },
+            { subject: 'Mathematics Knowledge', question: 'A rectangle has a length of 8 and a width of 5. What is its area?', choices: ['13', '26', '40', '45'], correctIndex: 2, explanation: 'Area = length × width = 8 × 5 = 40.' },
+            { subject: 'Mathematics Knowledge', question: 'What is 15% of 200?', choices: ['15', '20', '30', '45'], correctIndex: 2, explanation: '15% of 200 = 0.15 × 200 = 30.' },
+            { subject: 'Mathematics Knowledge', question: 'Simplify: 3(x + 4) = ?', choices: ['3x + 4', '3x + 12', 'x + 12', '3x + 7'], correctIndex: 1, explanation: 'Distribute: 3×x + 3×4 = 3x + 12.' },
+            { subject: 'Mathematics Knowledge', question: 'What is the square root of 81?', choices: ['7', '8', '9', '11'], correctIndex: 2, explanation: '9 × 9 = 81, so √81 = 9.' },
+            { subject: 'Mathematics Knowledge', question: 'If a car travels 240 miles in 4 hours, what is its average speed?', choices: ['40 mph', '50 mph', '60 mph', '70 mph'], correctIndex: 2, explanation: '240 ÷ 4 = 60 miles per hour.' },
+            { subject: 'Mathematics Knowledge', question: 'What is the value of 5! (5 factorial)?', choices: ['20', '60', '100', '120'], correctIndex: 3, explanation: '5! = 5×4×3×2×1 = 120.' },
+            // General Science (6)
+            { subject: 'General Science', question: 'Which gas do plants primarily absorb from the atmosphere for photosynthesis?', choices: ['Oxygen', 'Nitrogen', 'Carbon dioxide', 'Hydrogen'], correctIndex: 2, explanation: 'Plants absorb CO2 and release oxygen during photosynthesis.' },
+            { subject: 'General Science', question: 'What is the basic unit of life?', choices: ['Atom', 'Cell', 'Tissue', 'Organ'], correctIndex: 1, explanation: 'The cell is the smallest structural and functional unit of living organisms.' },
+            { subject: 'General Science', question: 'Which planet is known as the Red Planet?', choices: ['Venus', 'Jupiter', 'Mars', 'Saturn'], correctIndex: 2, explanation: 'Mars appears red due to iron oxide (rust) on its surface.' },
+            { subject: 'General Science', question: 'What force pulls objects toward the center of the Earth?', choices: ['Friction', 'Gravity', 'Magnetism', 'Tension'], correctIndex: 1, explanation: "Gravity is the force that attracts objects toward Earth's center." },
+            { subject: 'General Science', question: 'Which blood type is known as the universal donor?', choices: ['A', 'B', 'AB', 'O negative'], correctIndex: 3, explanation: 'O negative blood lacks A, B, and Rh antigens, making it safe for almost anyone to receive.' },
+            { subject: 'General Science', question: 'What is the chemical symbol for water?', choices: ['CO2', 'H2O', 'O2', 'NaCl'], correctIndex: 1, explanation: 'Water is composed of two hydrogen atoms and one oxygen atom: H2O.' },
+            // Paragraph Comprehension / Reading (8)
+            { subject: 'Paragraph Comprehension', question: 'Read: "Basic training pushes recruits both physically and mentally, but its real purpose is to build discipline and teamwork under pressure." According to the passage, what is training\'s real purpose?', choices: ['To make recruits physically tired', 'To build discipline and teamwork under pressure', "To test recruits' patience", 'To reduce the number of recruits'], correctIndex: 1, explanation: 'The passage explicitly states the real purpose is building discipline and teamwork under pressure.' },
+            { subject: 'Paragraph Comprehension', question: 'Read: "Although she had never operated a forklift before, Maria completed the certification course in record time." What can be inferred about Maria?', choices: ['She had prior forklift experience', 'She struggled with the course', 'She learned the skill quickly despite being new to it', 'She failed the certification'], correctIndex: 2, explanation: '"Never operated before" plus "record time" implies she learned quickly despite being new.' },
+            { subject: 'Paragraph Comprehension', question: 'Read: "The new radar system can detect objects twice as far as the previous model, but it requires significantly more power to operate." What is a trade-off of the new radar system?', choices: ["It's cheaper to build", 'It detects objects at a shorter range', 'It uses more power for better range', "It doesn't need electricity"], correctIndex: 2, explanation: 'The passage states greater range comes at the cost of needing more power.' },
+            { subject: 'Paragraph Comprehension', question: 'Read: "Most sailors found the night watch tedious, but a few volunteered for it every week." What does the passage suggest about most sailors\' opinion of night watch?', choices: ['They loved it', 'They found it boring', 'They were never assigned to it', 'They fought over it'], correctIndex: 1, explanation: '"Tedious" means boring, and the passage says most sailors found it so.' },
+            { subject: 'Paragraph Comprehension', question: 'Read: "Despite the tight deadline, the engineering team delivered the project a day early by working through the weekend." How did the team meet their goal?', choices: ['By skipping steps', 'By asking for an extension', 'By working extra hours over the weekend', 'By reducing the project scope'], correctIndex: 2, explanation: 'The passage states they worked through the weekend to finish early.' },
+            { subject: 'Paragraph Comprehension', question: 'Read: "The manual warns that skipping the pre-flight checklist, even for a short trip, has caused serious accidents in the past." What is the main idea of this passage?', choices: ['Pre-flight checklists are optional for short trips', 'Skipping checklists is always safe', 'Skipping the pre-flight checklist can be dangerous, regardless of trip length', 'Checklists take too long to complete'], correctIndex: 2, explanation: 'The passage warns that skipping the checklist has led to accidents, even on short trips.' },
+            { subject: 'Paragraph Comprehension', question: 'Read: "Unlike her classmates, who crammed the night before, Jenna reviewed her notes a little each day for two weeks." What can be inferred about Jenna\'s study habits?', choices: ['She did not study at all', 'She preferred a steady, gradual approach over cramming', "She copied her classmates' notes", 'She studied only the night before'], correctIndex: 1, explanation: "The passage contrasts her daily review with her classmates' cramming, implying a steady approach." },
+            { subject: 'Paragraph Comprehension', question: 'Read: "The commanding officer reminded the unit that attention to detail during equipment checks could mean the difference between mission success and failure." Why does the passage emphasize equipment checks?', choices: ['Because they are optional', 'Because attention to detail can determine mission outcomes', 'Because equipment rarely fails', 'Because checks are done only once a year'], correctIndex: 1, explanation: 'The passage directly ties careful equipment checks to mission success or failure.' }
+        ];
+
+        async function seedContentPack2() {
+            try {
+                const markerRef = firebase.firestore().collection('_contentSeeds').doc('pack2-math-science-word-reading');
+                const markerSnap = await markerRef.get();
+                if (markerSnap.exists) return;
+
+                const ts = firebase.firestore.FieldValue.serverTimestamp;
+                const batch = firebase.firestore().batch();
+
+                CONTENT_PACK_2_FLASHCARDS.forEach(card => {
+                    const ref = firebase.firestore().collection('flashcards').doc();
+                    batch.set(ref, { ...card, createdAt: ts() });
+                });
+                CONTENT_PACK_2_PRACTICE.forEach(q => {
+                    const ref = firebase.firestore().collection('practiceTests').doc();
+                    batch.set(ref, { ...q, createdAt: ts() });
+                });
+                batch.set(markerRef, { loadedAt: ts() });
+
+                await batch.commit();
+            } catch (error) {
+                console.log('Content pack 2 seed skipped/failed (safe to ignore if already loaded):', error.message);
+            }
         }
 
         async function seedDefaultAsvabContent() {
@@ -2089,6 +2202,110 @@
                 showStatus('sessionStatus', `Error: ${error.message}`, 'error');
             }
         }
+
+        // ============================================
+        // MESSAGES (Portal DMs)
+        // ============================================
+        let activeDmUid = null;
+        let activeDmUnsubscribe = null;
+
+        function escapeHtmlAdmin(str) {
+            const div = document.createElement('div');
+            div.textContent = str || '';
+            return div.innerHTML;
+        }
+
+        async function loadDmThreadList() {
+            const listEl = document.getElementById('dmThreadList');
+            const loading = document.getElementById('dmThreadListLoading');
+
+            try {
+                const snapshot = await firebase.firestore().collection('dmThreads').orderBy('lastMessageAt', 'desc').get();
+                loading.style.display = 'none';
+
+                if (snapshot.empty) {
+                    listEl.innerHTML = '<p style="color: var(--light-gray); font-size: 0.85rem;">No conversations yet.</p>';
+                    return;
+                }
+
+                listEl.innerHTML = snapshot.docs.map(doc => {
+                    const data = doc.data();
+                    const name = data.memberName || data.memberEmail || 'Member';
+                    const preview = (data.lastMessageText || '').substring(0, 60);
+                    return `
+                        <div onclick="openDmThread('${doc.id}', '${name.replace(/'/g, "\\'")}')" style="background: var(--dark-gray); border: 1px solid var(--mid-gray); padding: 14px; margin-bottom: 10px; cursor: pointer;">
+                            <p style="color: var(--white); font-size: 0.85rem; margin-bottom: 4px;">${escapeHtmlAdmin(name)}${data.unreadByAdmin ? ' <span style="color: var(--gold);">●</span>' : ''}</p>
+                            <p style="color: var(--light-gray); font-size: 0.75rem;">${escapeHtmlAdmin(preview)}</p>
+                        </div>
+                    `;
+                }).join('');
+            } catch (error) {
+                loading.innerHTML = `<p style="color: #fca5a5;">Error loading conversations: ${error.message}</p>`;
+            }
+        }
+
+        async function openDmThread(uid, name) {
+            activeDmUid = uid;
+            document.getElementById('dmActiveName').textContent = name;
+            document.getElementById('dmReplyForm').style.display = 'flex';
+            document.getElementById('dmReplyForm').style.flexDirection = 'column';
+
+            // Mark as read
+            firebase.firestore().collection('dmThreads').doc(uid).set({ unreadByAdmin: false }, { merge: true }).catch(() => {});
+
+            const threadEl = document.getElementById('dmActiveThread');
+            if (activeDmUnsubscribe) activeDmUnsubscribe();
+
+            activeDmUnsubscribe = firebase.firestore().collection('dmThreads').doc(uid).collection('messages')
+                .orderBy('sentAt', 'asc')
+                .onSnapshot(snap => {
+                    const messages = snap.docs.map(d => d.data());
+                    if (messages.length === 0) {
+                        threadEl.innerHTML = '<p style="color: var(--light-gray); font-size: 0.85rem; text-align: center; margin: auto;">No messages yet.</p>';
+                        return;
+                    }
+                    threadEl.innerHTML = messages.map(m => `
+                        <div style="align-self: ${m.sender === 'admin' ? 'flex-end' : 'flex-start'}; max-width: 75%; background: ${m.sender === 'admin' ? 'var(--gold)' : 'var(--black)'}; color: ${m.sender === 'admin' ? 'var(--black)' : 'var(--white)'}; border: ${m.sender === 'admin' ? 'none' : '1px solid var(--mid-gray)'}; padding: 10px 14px; border-radius: 10px; font-size: 0.85rem;">
+                            ${escapeHtmlAdmin(m.text)}
+                        </div>
+                    `).join('');
+                    threadEl.scrollTop = threadEl.scrollHeight;
+                });
+        }
+
+        document.getElementById('dmReplyForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!activeDmUid) return;
+
+            const input = document.getElementById('dmReplyInput');
+            const text = input.value.trim();
+            if (!text) return;
+
+            const btn = document.getElementById('dmReplyBtn');
+            btn.disabled = true;
+
+            try {
+                const threadRef = firebase.firestore().collection('dmThreads').doc(activeDmUid);
+                await threadRef.set({
+                    lastMessageText: text,
+                    lastMessageAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    unreadByAdmin: false
+                }, { merge: true });
+
+                await threadRef.collection('messages').add({
+                    sender: 'admin',
+                    text,
+                    sentAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                input.value = '';
+                loadDmThreadList();
+            } catch (error) {
+                showStatus('dmReplyStatus', `Error: ${error.message}`, 'error');
+            }
+
+            btn.disabled = false;
+        });
 
         // ============================================
         // UTILITIES

@@ -80,9 +80,32 @@ service cloud.firestore {
     // ---------- Member portal ----------
 
     match /members/{uid} {
-      // A member can read/write only their own profile. Admin can read all.
+      // A member can read/write only their own profile - this now also
+      // covers phone number and the per-feature preference toggles saved
+      // from the Portal's Settings tab. Admin can read all.
       allow read, write: if isSignedIn() && request.auth.uid == uid;
       allow read: if isAdmin();
+    }
+
+    // ---------- Portal DMs ----------
+    // One thread doc per member (id = uid) holding inbox metadata for the
+    // admin's Messages tab, with the actual messages in a subcollection.
+    match /dmThreads/{uid} {
+      allow read, write: if isAdmin() || (isSignedIn() && request.auth.uid == uid);
+
+      match /messages/{messageId} {
+        allow read: if isAdmin() || (isSignedIn() && request.auth.uid == uid);
+        // A member may only ever post as themselves; the admin can post
+        // as herself from the dashboard.
+        allow create: if isAdmin() ||
+          (isSignedIn() && request.auth.uid == uid && request.resource.data.sender == 'member');
+      }
+    }
+
+    // Internal marker docs so one-time admin content seeds (default ASVAB
+    // content, subject-focused content packs) never load twice.
+    match /_contentSeeds/{docId} {
+      allow read, write: if isAdmin();
     }
 
     match /practiceTests/{docId} {
